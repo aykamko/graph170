@@ -1,3 +1,30 @@
+/*----- General --------------------------------------------------------------*/
+body {
+    margin: 0;
+}
+
+/*----- CodeMirror -----------------------------------------------------------*/
+textarea {
+    margin: 0;
+    padding: 0;
+}
+
+#terminal {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 550px;
+    height: 100%;
+}
+
+/*----- D3 -------------------------------------------------------------------*/
+#graph {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+
 svg {
   background-color: #EEE;
   cursor: default;

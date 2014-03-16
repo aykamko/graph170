@@ -1,12 +1,22 @@
-// set up SVG for D3
-var width  = 1000,
-    height = 1000,
-    colors = d3.scale.category10();
+$(document).ready(function() {
 
-var svg = d3.select('body')
-  .append('svg')
-  .attr('width', width)
-  .attr('height', height);
+// set up SVG for D3
+var colors = d3.scale.category10();
+
+var terminal = $('.CodeMirror')[0];
+var terWidth = $(terminal).width();
+var svgWidth = $(window).width() - terWidth;
+var windowHeight = $(window).height();
+var svg = d3.select('body').append('svg')
+            .attr('class', 'graph')
+            .attr('width', svgWidth);
+
+$(window).resize( function() {
+    svgWidth = $(window).width() - terWidth;
+    windowHeight = $(window).height();
+    svg.attr('width', svgWidth);
+    computeForce();
+});
 
 // set up initial nodes and links
 //  - nodes are known by 'id', not by index in array.
@@ -23,13 +33,17 @@ var nodes = [
   ];
 
 // init D3 force layout
-var force = d3.layout.force()
+var force;
+var computeForce = function() {
+    force = d3.layout.force()
     .nodes(nodes)
     .links(links)
-    .size([width, height])
+    .size([svgWidth, windowHeight])
     .linkDistance(200)
     .charge(-800)
     .on('tick', tick)
+}
+computeForce();
 
 // define arrow markers for graph links
 svg.append('svg:defs').append('svg:marker')
@@ -355,3 +369,4 @@ d3.select(window)
   .on('keydown', keydown)
   .on('keyup', keyup);
 restart();
+});
