@@ -15,7 +15,7 @@ $(window).resize( function() {
     svgWidth = $(window).width() - terWidth;
     windowHeight = $(window).height();
     svg.attr('width', svgWidth);
-    computeForce();
+    force.size([svgWidth, windowHeight]).resume();
 });
 
 // set up initial nodes and links
@@ -33,17 +33,13 @@ var nodes = [
   ];
 
 // init D3 force layout
-var force;
-var computeForce = function() {
-    force = d3.layout.force()
+var force = d3.layout.force()
     .nodes(nodes)
     .links(links)
     .size([svgWidth, windowHeight])
     .linkDistance(200)
     .charge(-800)
     .on('tick', tick)
-}
-computeForce();
 
 // define arrow markers for graph links
 svg.append('svg:defs').append('svg:marker')
