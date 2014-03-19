@@ -11,12 +11,18 @@ var svg = d3.select('body').append('svg')
             .attr('class', 'graph')
             .attr('width', svgWidth);
 
+var resizeTimeout;
 $(window).resize( function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(resizeD3, 250);
+});
+
+var resizeD3 = function() {
     svgWidth = $(window).width() - terWidth;
     windowHeight = $(window).height();
     svg.attr('width', svgWidth);
     force.size([svgWidth, windowHeight]).resume();
-});
+}
 
 // set up initial nodes and links
 //  - nodes are known by 'id', not by index in array.

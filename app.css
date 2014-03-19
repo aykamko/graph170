@@ -1,6 +1,12 @@
 /*----- General --------------------------------------------------------------*/
 body {
     margin: 0;
+    background-color: #EEE;
+}
+
+p {
+  margin: 0;
+  padding: 0;
 }
 
 /*----- CodeMirror -----------------------------------------------------------*/
@@ -10,11 +16,33 @@ textarea {
 }
 
 #terminal {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 550px;
-    height: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 550px;
+  height: 100%;
+  display: table;
+}
+
+#terminal > div {
+  display: table-row;
+}
+
+.output-row {
+  height: 300px;
+}
+
+#output {
+  background-color: black;
+  height: 100%;
+  width: 100%;
+}
+
+#output p {
+  padding: 10px;
+  padding-left: 20px;
+  color: white;
+  font-family: monospace;
 }
 
 /*----- D3 -------------------------------------------------------------------*/
@@ -22,7 +50,6 @@ textarea {
     position: absolute;
     top: 0;
     left: 0;
-    height: 100%;
 }
 
 svg {
