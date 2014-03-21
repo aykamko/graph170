@@ -5,11 +5,14 @@ var colors = d3.scale.category10();
 
 var terminal = $('.CodeMirror')[0];
 var terWidth = $(terminal).width();
-var svgWidth = $(window).width() - terWidth;
+var windowWidth = $(window).width();
 var windowHeight = $(window).height();
-var svg = d3.select('body').append('svg')
+
+var svgWidth = windowWidth - terWidth;
+
+var svg = d3.select('#body-container').append('svg')
             .attr('class', 'graph')
-            .attr('width', svgWidth);
+            .attr('width', svgWidth + 'px');
 
 var resizeTimeout;
 $(window).resize( function() {
@@ -18,10 +21,11 @@ $(window).resize( function() {
 });
 
 var resizeD3 = function() {
-    svgWidth = $(window).width() - terWidth;
+    windowWidth = $(window).width();
     windowHeight = $(window).height();
-    svg.attr('width', svgWidth);
-    force.size([svgWidth, windowHeight]).resume();
+    svgWidth = $(window).width() - terWidth;
+    svg.attr('width', svgWidth + 'px');
+    force.size([svgWidth + 'px', windowHeight + 'px']).resume();
 }
 
 // set up initial nodes and links
@@ -133,7 +137,7 @@ function restart() {
     .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
     .style('marker-end', function(d) { return d.right ? 'url(#end-arrow)' : ''; })
     .on('mousedown', function(d) {
-      if(d3.event.ctrlKey) return;
+      if(d3.event.shiftKey) return;
 
       // select link
       mousedown_link = d;
@@ -145,7 +149,6 @@ function restart() {
 
   // remove old links
   path.exit().remove();
-
 
   // circle (node) group
   // NB: the function arg is crucial here! nodes are known by id, not by index!
@@ -174,7 +177,7 @@ function restart() {
       d3.select(this).attr('transform', '');
     })
     .on('mousedown', function(d) {
-      if(d3.event.ctrlKey) return;
+      if(d3.event.shiftKey) return;
 
       // select node
       mousedown_node = d;
@@ -258,7 +261,7 @@ function mousedown() {
   // because :active only works in WebKit?
   svg.classed('active', true);
 
-  if(d3.event.ctrlKey || mousedown_node || mousedown_link) return;
+  if(d3.event.shiftKey || mousedown_node || mousedown_link) return;
 
   // insert new node at point
   var point = d3.mouse(this),
@@ -313,7 +316,7 @@ function keydown() {
   lastKeyDown = d3.event.keyCode;
 
   // ctrl
-  if(d3.event.keyCode === 17) {
+  if(d3.event.shiftKey) {
     circle.call(force.drag);
     svg.classed('ctrl', true);
   }
@@ -332,35 +335,35 @@ function keydown() {
       selected_node = null;
       restart();
       break;
-    case 66: // B
-      if(selected_link) {
-        // set link direction to both left and right
-        selected_link.left = true;
-        selected_link.right = true;
-      }
-      restart();
-      break;
-    case 76: // L
-      if(selected_link) {
-        // set link direction to left only
-        selected_link.left = true;
-        selected_link.right = false;
-      }
-      restart();
-      break;
+    // case 66: // B
+    //   if(selected_link) {
+    //     // set link direction to both left and right
+    //     selected_link.left = true;
+    //     selected_link.right = true;
+    //   }
+    //   restart();
+    //   break;
+    // case 76: // L
+    //   if(selected_link) {
+    //     // set link direction to left only
+    //     selected_link.left = true;
+    //     selected_link.right = false;
+    //   }
+    //   restart();
+    //   break;
   }
 }
 
 function keyup() {
-  lastKeyDown = -1;
-
   // ctrl
-  if(d3.event.keyCode === 17) {
+  if(lastKeyDown = 16) {
     circle
       .on('mousedown.drag', null)
       .on('touchstart.drag', null);
     svg.classed('ctrl', false);
   }
+
+  lastKeyDown = -1;
 }
 
 // app starts here
