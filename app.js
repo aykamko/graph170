@@ -1,3 +1,5 @@
+var graph;
+
 $(document).ready(function() {
 
 // set up SVG for D3
@@ -31,21 +33,18 @@ var resizeD3 = function() {
 // set up initial nodes and links
 //  - nodes are known by 'id', not by index in array.
 //  - links are always source < target; edge directions are set by 'left' and 'right'.
-var nodes = [
-    {id: 0},
-    {id: 1},
-    {id: 2},
-  ],
-  lastNodeId = 2,
-  links = [
-    {source: nodes[0], target: nodes[1], left: false, right: true },
-    {source: nodes[1], target: nodes[2], left: false, right: true }
-  ];
+
+graph = new Graph();
+for (var i = 0; i < 3; i++) {
+    graph.addNode();
+}
+graph.addLink(0, 1);
+graph.addLink(1, 2);
 
 // init D3 force layout
 var force = d3.layout.force()
-    .nodes(nodes)
-    .links(links)
+    .nodes(graph.nodeLL())
+    .links(graph.linkLL())
     .size([svgWidth, windowHeight])
     .linkDistance(200)
     .charge(-800)
@@ -99,18 +98,18 @@ function resetMouseVars() {
 // update force layout (called automatically each iteration)
 function tick() {
   // draw directed edges with proper padding from node centers
-  path.attr('d', function(d) {
-    var deltaX = d.target.x - d.source.x,
-        deltaY = d.target.y - d.source.y,
-        dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY),
+  path.attr('d', function(link) {
+    var deltaX = link.target.x - link.source.x,
+        deltaY = link.target.y - link.source.y,
+        dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 0.00001,
         normX = deltaX / dist,
         normY = deltaY / dist,
-        sourcePadding = d.left ? 35 : 30,
-        targetPadding = d.right ? 35 : 30,
-        sourceX = d.source.x + (sourcePadding * normX),
-        sourceY = d.source.y + (sourcePadding * normY),
-        targetX = d.target.x - (targetPadding * normX),
-        targetY = d.target.y - (targetPadding * normY);
+        sourcePadding = 30,
+        targetPadding = 35,
+        sourceX = link.source.x + (sourcePadding * normX),
+        sourceY = link.source.y + (sourcePadding * normY),
+        targetX = link.target.x - (targetPadding * normX),
+        targetY = link.target.y - (targetPadding * normY);
     return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
   });
 
@@ -122,20 +121,19 @@ function tick() {
 // update graph (called when needed)
 function restart() {
   // path (link) group
-  path = path.data(links);
+  path = path.data(graph.linkLL());
 
   // update existing links
   path.classed('selected', function(d) { return d === selected_link; })
-    .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
-    .style('marker-end', function(d) { return d.right ? 'url(#end-arrow)' : ''; });
-
+    .style('marker-start', function(d) { return ''; })
+    .style('marker-end', function(d) { return 'url(#end-arrow)'; });
 
   // add new links
   path.enter().append('svg:path')
     .attr('class', 'link')
     .classed('selected', function(d) { return d === selected_link; })
-    .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
-    .style('marker-end', function(d) { return d.right ? 'url(#end-arrow)' : ''; })
+    .style('marker-start', function(d) { return ''; })
+    .style('marker-end', function(d) { return 'url(#end-arrow)'; })
     .on('mousedown', function(d) {
       if(d3.event.shiftKey) return;
 
@@ -152,7 +150,7 @@ function restart() {
 
   // circle (node) group
   // NB: the function arg is crucial here! nodes are known by id, not by index!
-  circle = circle.data(nodes, function(d) { return d.id; });
+  circle = circle.data(graph.nodeLL());
 
   // update existing nodes
   circle.selectAll('circle')
@@ -160,6 +158,7 @@ function restart() {
 
   // add new nodes
   var g = circle.enter().append('svg:g');
+  console.log(g);
 
   g.append('svg:circle')
     .attr('class', 'node')
@@ -211,27 +210,14 @@ function restart() {
       // add link to graph (update if exists)
       // NB: links are strictly source < target; arrows separately specified by booleans
       var source, target, direction;
-      if(mousedown_node.id < mouseup_node.id) {
-        source = mousedown_node;
-        target = mouseup_node;
-        direction = 'right';
-      } else {
-        source = mouseup_node;
-        target = mousedown_node;
-        direction = 'left';
-      }
+      source = mousedown_node;
+      target = mouseup_node;
 
-      var link;
-      link = links.filter(function(l) {
-        return (l.source === source && l.target === target);
-      })[0];
+      var link = links.get(source.label + "," + target.label);
 
-      if(link) {
-        link[direction] = true;
-      } else {
-        link = {source: source, target: target, left: false, right: false};
-        link[direction] = true;
-        links.push(link);
+      if (!link) {
+        link = new Link(source, target);
+        links.put(source.label + "," + target.label, link);
       }
 
       // select new link
@@ -245,7 +231,7 @@ function restart() {
       .attr('x', 0)
       .attr('y', 11)
       .attr('class', 'id')
-      .text(function(d) { return d.id; });
+      .text(function(d) { return d.label; });
 
   // remove old nodes
   circle.exit().remove();
@@ -265,10 +251,9 @@ function mousedown() {
 
   // insert new node at point
   var point = d3.mouse(this),
-      node = {id: ++lastNodeId};
+      node = graph.addNode();
   node.x = point[0];
   node.y = point[1];
-  nodes.push(node);
 
   restart();
 }
