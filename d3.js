@@ -1,3 +1,4 @@
+var fuck;
 !function() {
   var d3 = {
     version: "3.4.4"
@@ -806,7 +807,7 @@
          /*  enterNodes[i] = d3_selection_dataNode(groupData[i]); */
           enterNodes[i] = d3_selection_dataNode(nodeData);
         }
-        for (;i < n; ++i) {
+        for (; i < n; ++i) {
           exitNodes[i] = group[i];
         }
       }
@@ -5477,7 +5478,7 @@
         n = data.length;
         // if (compat) for (i = 0; i < n; ++i) {
         //   d = data[i];
-        if (compat) for (d = data.first; d != null; d = d.next) {
+        if (compat) for (i = 0, d = data.first; d != null; d = d.next, i++) {
           if (d.x < x1_) x1_ = d.x;
           if (d.y < y1_) y1_ = d.y;
           if (d.x > x2_) x2_ = d.x;
@@ -5485,7 +5486,7 @@
           xs.push(d.x);
           ys.push(d.y);
        /*  } else for (i = 0; i < n; ++i) { */
-        } else for (d = data.first; d != null; d = d.next) {
+        } else for (i = 0, d = data.first; d != null; d = d.next, i++) {
          /*  var x_ = +fx(d = data[i], i), y_ = +fy(d, i); */
           var x_ = +fx(d, i), y_ = +fy(d, i);
           if (x_ < x1_) x1_ = x_;
@@ -5535,8 +5536,9 @@
       };
       i = -1;
       if (x1 == null) {
-        while (++i < n) {
-          insert(root, data[i], xs[i], ys[i], x1_, y1_, x2_, y2_);
+        var o;
+        for (i = 0, o = data.first; o != null; o = o.next, i++) {
+          insert(root, o, xs[i], ys[i], x1_, y1_, x2_, y2_);
         }
         --i;
       } else data.forEach(root.add);
@@ -6149,7 +6151,7 @@
       }
       var n = nodes.length, m = links.length, q, i, o, s, t, l, k, x, y;
      /*  for (i = 0; i < m; ++i) { */
-      for (o = links.first; o != null; o = o.next) {
+      for (i = 0, o = links.first; o != null; o = o.next, i++) {
        /*  o = links[i]; */
         s = o.source;
         t = o.target;
@@ -6171,7 +6173,7 @@
        /*  i = -1; */
        /*  if (k) while (++i < n) { */
         if (k) {
-          for (o = nodes.first; o != null; o = o.next) {
+          for (i = 0, o = nodes.first; o != null; o = o.next, i++) {
             /*  o = nodes[i]; */
             o.x += (x - o.x) * k;
             o.y += (y - o.y) * k;
@@ -6274,13 +6276,13 @@
     force.start = function() {
       var i, n = nodes.length, m = links.length, w = size[0], h = size[1], neighbors, o;
      /*  for (i = 0; i < n; ++i) { */
-      for (o = nodes.first; o != null; o = o.next) {
+      for (i = 0, o = nodes.first; o != null; o = o.next, ++i) {
        /*  (o = nodes[i]).index = i; */
         o.index = i;
         o.weight = 0;
       }
      /*  for (i = 0; i < m; ++i) { */
-      for (o = links.first; o != null; o = o.next) {
+      for (i = 0, o = links.first; o != null; o = o.next, ++i) {
        /*  o = links[i]; */
         if (typeof o.source == "number") o.source = nodes[o.source];
         if (typeof o.target == "number") o.target = nodes[o.target];
@@ -6288,7 +6290,7 @@
         ++o.target.weight;
       }
      /*  for (i = 0; i < n; ++i) { */
-      for (o = nodes.first; o != null; o = o.next) {
+      for (i = 0, o = nodes.first; o != null; o = o.next, i++) {
        /*  o = nodes[i]; */
         if (isNaN(o.x)) o.x = position("x", w);
         if (isNaN(o.y)) o.y = position("y", h);
@@ -6307,8 +6309,10 @@
           for (j = 0; j < n; ++j) {
             neighbors[j] = [];
           }
-          for (j = 0; j < m; ++j) {
-            var o = links[j];
+         /*  for (j = 0; j < m; ++j) { */
+          var o;
+          for (o = links.first; o != null; o = o.next) {
+           /*  var o = links[j]; */
             neighbors[o.source.index].push(o.target);
             neighbors[o.target.index].push(o.source);
           }

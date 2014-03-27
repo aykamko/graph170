@@ -158,7 +158,6 @@ function restart() {
 
   // add new nodes
   var g = circle.enter().append('svg:g');
-  console.log(g);
 
   g.append('svg:circle')
     .attr('class', 'node')
@@ -213,12 +212,7 @@ function restart() {
       source = mousedown_node;
       target = mouseup_node;
 
-      var link = links.get(source.label + "," + target.label);
-
-      if (!link) {
-        link = new Link(source, target);
-        links.put(source.label + "," + target.label, link);
-      }
+      var link = graph.addLink(source.label, target.label);
 
       // select new link
       selected_link = link;

@@ -5,95 +5,56 @@ function LinkedList() {
 
 function NodeLL(label) {
     this.label = label.toString();
-    this.x = 0;
-    this.y = 0;
     this.firstLink = null;
     this.lastLink = null;
     this.prev = null;
     this.next = null;
 
     this.__neighbors__ = {};
-    this.nodeList = null;
 
     this.addLinkToNode = function(node) {
-        if (this.__neighbors__[node]) {
+        if (this.__neighbors__[node.label]) {
             return;
         }
         var newLink = new LinkLL(this, node);
-        if (this.firstLink) {
-            newLink.prev = this.firstLink.prev;
-            this.firstLink.prev = newLink;
-            this.firstLink.prevInNode = newLink;
-            newLink.next = this.firstLink;
-            newLink.nextInNode = this.firstLink;
+        if (this.lastLink) {
+            this.lastLink.nextInNode = newLink;
+            newLink.prevInNode = this.lastLink;
         } else {
-            if (this.next) {
-                newLink.next = this.next.firstLink;
-            }
-            if (this.prev) {
-                newLink.prev = this.prev.lastLink;
-            }
-            this.lastLink = newLink;
+            this.firstLink = newLink;
         }
-        this.firstLink = newLink;
-        this.__neighbors__[node] = newLink;
+        this.lastLink = newLink;
+        this.__neighbors__[node.label] = newLink;
         return newLink;
     }
 
     this.removeLinkToNode = function(node) {
-        var markedLink = this.__neighbors__[node];
+        var markedLink = this.__neighbors__[node.label];
         if (!markedLink) {
-            return;
+            return false;
         }
-        var prevLink = markedLink.prev;
-        var first = (markedLink === this.firstLink),
-            last = (markedLink === this.lastLink);
+        var prevLink = markedLink.prevInNode;
+        var nextLink = markedLink.nextInNode;
         if (prevLink) {
-            prevLink.next = markedLink.next;
-            if (!first) {
-                prevLink.nextInNode = markedLink.nextInNode;
-            }
-            if (last) {
-                this.lastLink = prevLink;
-            }
+            prevLink.nextInNode = markedLink.nextInNode;
+        } else {
+            nextLink = this.firstLink;
         }
-        var nextLink = markedLink.next;
         if (nextLink) {
-            nextLink.prev = markedLink.prev;
-            if (!last) {
-                nextLink.prevInNode = markedLink.prevInNode;
-            }
-            if (first) {
-                this.firstLink = nextLink;
-            }
+            nextLink.prevInNode = markedLink.prevInNode;
+        } else {
+            prevLink = this.lastLink;
         }
-
-        markedLink.markForRemoval();
-        // TODO: check for errors in deleting
-        delete this.__neighbors__[node];
-        delete markedLink;
+        delete this.__neighbors__[node.label];
+        return markedLink;
     }
 
     this.markForRemoval = function() {
         this.__neighbors__ = null;
-        var curLink = this.firstLink;
         this.firstLink = null;
         this.lastLink = null;
-        var nextLink = null;
-        while (curLink) {
-            nextLink = curLink.nextInNode;
-            curLink.markForRemoval();
-            delete curLink;
-            curLink = nextLink;
-        }
-        this.prev.lastLink.next = this.next.firstLink;
-        this.next.firstLink.prev = this.prev.lastLink;
         this.prev = null;
         this.next = null;
-    }
-
-    this.links = function() {
-        return this.firstLink;
     }
 }
 
@@ -128,17 +89,22 @@ function LinkLL(source, target) {
 function Graph() {
     this.lastNodeId = -1;
     this.firstNode = null;
+    this.lastNode = null;
+    this.firstLink = null;
+    this.lastLink = null;
     this.nodes = {};
     this.nodeLinkedList = new LinkedList();
     this.linkLinkedList = new LinkedList();
     
     this.addNode = function() {
         var newNode = new NodeLL(++(this.lastNodeId));
-        if (this.firstNode) {
-            this.firstNode.prev = newNode;
+        if (this.lastNode) {
+            this.lastNode.next = newNode;
+        } else {
+            this.firstNode = newNode;
         }
-        newNode.next = this.firstNode;
-        this.firstNode = newNode;
+        newNode.prev = this.lastNode;
+        this.lastNode = newNode;
         this.nodes[this.lastNodeId] = newNode;
         this.nodeLinkedList.length += 1;
         return newNode;
@@ -150,15 +116,16 @@ function Graph() {
             return;
         }
         var prevNode = markedNode.prev;
+        var nextNode = markedNode.next;
         if (prevNode) {
             prevNode.next = markedNode.next;
+        } else {
+            this.firstNode = nextNode;
         }
-        var nextNode = markedNode.next;
         if (nextNode) {
             nextNode.prev = markedNode.prev;
-            if (markedNode === this.firstNode) {
-                this.firstNode = nextNode;
-            }
+        } else {
+            this.lastNode = prevNode;
         }
         markedNode.markForRemoval();
         delete this.nodes[id];
@@ -169,10 +136,22 @@ function Graph() {
     this.addLink = function(sourceId, targetId) {
         var source = this.nodes[sourceId];
         var target = this.nodes[targetId];
-        var newLink = null;
-        if (source && target) {
-            newLink = source.addLinkToNode(target);
+        if (!source || !target) {
+            return;
         }
+        newLink = source.addLinkToNode(target);
+        if (!newLink) {
+            return;
+        }
+
+        if (this.lastLink) {
+            this.lastLink.next = newLink;
+            newLink.prev = this.lastLink;
+        } else {
+            this.firstLink = newLink;
+        }
+        this.lastLink = newLink;
+
         this.linkLinkedList.length += 1;
         return newLink;
     }
@@ -180,10 +159,26 @@ function Graph() {
     this.removeLink = function(sourceId, targetId) {
         var source = this.nodes[sourceId];
         var target = this.nodes[targetId];
-        if (source && target) {
-            source.removeLinkToNode(target);
+        var markedLink = null;
+        if (!source || !target || !(markedLink = source.removeLinkToNode(target))); {
+            return;
         }
+        var prevLink = markedLink.prev,
+            nextLink = markedLink.next;
+        if (prevLink) {
+            prevLink.next = nextLink;
+        } else {
+            this.firstLink = nextLink;
+        }
+        if (nextLink) {
+            nextLink.prev = prevLink;
+        } else {
+            this.lastLink = prevLink;
+        }
+            
         this.linkLinkedList.length -= 1;
+        markedLink.markForRemoval();
+        delete markedLink;
     }
 
     this.nodeLL = function() {
@@ -192,12 +187,7 @@ function Graph() {
     }
 
     this.linkLL = function() {
-        var fnode = this.firstNode;
-        this.linkLinkedList.first = null;
-        while (fnode && !this.linkLinkedList.first) {
-            this.linkLinkedList.first = fnode.firstLink;
-            fnode = fnode.next;
-        }
+        this.linkLinkedList.first = this.firstLink;
         return this.linkLinkedList;
     }
 }
