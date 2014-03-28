@@ -794,6 +794,8 @@ var fuck;
        /*  for (i = -1; ++i < n0; ) { */
         for (i = 0, nodeData = groupData.first; i < n0; nodeData = nodeData.next, i++) {
           node = group[i];
+          console.log('update: ' + i);
+          console.log(node);
          /*  nodeData = groupData[i]; */
           if (node) {
             node.__data__ = nodeData;
@@ -808,8 +810,9 @@ var fuck;
           enterNodes[i] = d3_selection_dataNode(nodeData);
         }
         for (; i < n; ++i) {
+          console.log('exit: ' + i);
+          console.log(group[i]);
           exitNodes[i] = group[i];
-          console.log(exitNodes[i]);
         }
       }
       enterNodes.update = updateNodes;

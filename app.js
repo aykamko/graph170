@@ -305,10 +305,22 @@ function keydown() {
     case 8: // backspace
     case 46: // delete
       if (selected_node) {
+        // var nodes = graph.nodeLL().first;
+        // while (nodes) {
+        //     console.log(nodes);
+        //     nodes = nodes.next;
+        // }
+        console.log('---');
         graph.removeNode(selected_node);
+        // var nodes = graph.nodeLL().first;
+        // while (nodes) {
+        //     console.log(nodes);
+        //     nodes = nodes.next;
+        // }
       } else if (selected_link) {
         graph.removeLink(selected_link);
       }
+
       selected_link = null;
       selected_node = null;
       restart();

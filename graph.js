@@ -176,7 +176,6 @@ function Graph() {
     }
 
     this.removeLink = function(link) {
-        console.log(link);
         link.source.removeOutgoingLink(link);
         link.target.removeIncomingLink(link);
         var prevLink = link.prev,
