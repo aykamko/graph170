@@ -809,6 +809,7 @@ var fuck;
         }
         for (; i < n; ++i) {
           exitNodes[i] = group[i];
+          console.log(exitNodes[i]);
         }
       }
       enterNodes.update = updateNodes;
