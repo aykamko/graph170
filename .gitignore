@@ -1,3 +1,7 @@
+# skulpt directory
+skulpt
+
+# compiled python
 *.py[cod]
 
 # C extensions
