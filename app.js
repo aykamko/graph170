@@ -150,7 +150,7 @@ function restart() {
 
   // circle (node) group
   // NB: the function arg is crucial here! nodes are known by id, not by index!
-  circle = circle.data(graph.nodeLL());
+  circle = circle.data(graph.nodeLL(), function(d) { return d.label });
 
   // update existing nodes
   circle.selectAll('circle')
@@ -305,18 +305,7 @@ function keydown() {
     case 8: // backspace
     case 46: // delete
       if (selected_node) {
-        // var nodes = graph.nodeLL().first;
-        // while (nodes) {
-        //     console.log(nodes);
-        //     nodes = nodes.next;
-        // }
-        console.log('---');
         graph.removeNode(selected_node);
-        // var nodes = graph.nodeLL().first;
-        // while (nodes) {
-        //     console.log(nodes);
-        //     nodes = nodes.next;
-        // }
       } else if (selected_link) {
         graph.removeLink(selected_link);
       }
