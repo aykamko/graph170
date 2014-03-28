@@ -37,8 +37,10 @@ $(document).ready(function () {
         mypre.innerHTML = ''; 
         Sk.pre = "output";
         Sk.configure({output:outf, read:builtinRead}); 
-        var code = editor.getValue();
-        code = "from graph import *\n\n" + code;
-        eval(Sk.importMainWithBody("<stdin>",false,code));
+
+        var graph_string = translate_graph();
+        var full_code = setup_code + graph_string + editor.getValue();
+
+        eval(Sk.importMainWithBody("<stdin>",false,full_code));
     } 
 });

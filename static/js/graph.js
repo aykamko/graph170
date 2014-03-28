@@ -89,6 +89,14 @@ function EdgeLink(source, target, weight) {
         }
     }
 
+    this.sourceLabel = function() {
+        return this.source.label;
+    }
+
+    this.targetLabel = function() {
+        return this.target.label;
+    }
+
     this.markForRemoval = function() {
         this.source = null;
         this.target = null;
