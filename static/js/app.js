@@ -36,15 +36,15 @@ var resizeD3 = function() {
 
 graph = new Graph();
 for (var i = 0; i < 3; i++) {
-    graph.addNode();
+    graph.addVertex(null, false);
 }
-graph.addLink(0, 1);
-graph.addLink(1, 2);
+graph.addEdge(0, 1, false);
+graph.addEdge(1, 2, false);
 
 // init D3 force layout
 var force = d3.layout.force()
-    .nodes(graph.nodeLL())
-    .links(graph.linkLL())
+    .nodes(graph.vertexList())
+    .links(graph.edgeList())
     .size([svgWidth, windowHeight])
     .linkDistance(200)
     .charge(-800)
@@ -121,7 +121,7 @@ function tick() {
 // update graph (called when needed)
 function restart() {
   // path (link) group
-  path = path.data(graph.linkLL());
+  path = path.data(graph.edgeList());
 
   // update existing links
   path.classed('selected', function(d) { return d === selected_link; })
@@ -150,7 +150,7 @@ function restart() {
 
   // circle (node) group
   // NB: the function arg is crucial here! nodes are known by id, not by index!
-  circle = circle.data(graph.nodeLL(), function(d) { return d.label });
+  circle = circle.data(graph.vertexList(), function(d) { return d.label });
 
   // update existing nodes
   circle.selectAll('circle')
@@ -212,7 +212,7 @@ function restart() {
       source = mousedown_node;
       target = mouseup_node;
 
-      var link = graph.addLink(source.label, target.label);
+      var link = graph.addEdge(source.label, target.label, false);
 
       // select new link
       selected_link = link;
@@ -234,6 +234,8 @@ function restart() {
   force.start();
 }
 
+graph.setRestartFunc(restart);
+
 function mousedown() {
   // prevent I-bar on drag
   //d3.event.preventDefault();
@@ -245,7 +247,7 @@ function mousedown() {
 
   // insert new node at point
   var point = d3.mouse(this),
-      node = graph.addNode();
+      node = graph.addVertex(null, false);
   node.x = point[0];
   node.y = point[1];
 
@@ -289,7 +291,7 @@ function spliceLinksForNode(node) {
 var lastKeyDown = -1;
 
 function keydown() {
-  d3.event.preventDefault();
+/*   d3.event.preventDefault(); */
 
   if(lastKeyDown !== -1) return;
   lastKeyDown = d3.event.keyCode;
@@ -305,9 +307,9 @@ function keydown() {
     case 8: // backspace
     case 46: // delete
       if (selected_node) {
-        graph.removeNode(selected_node);
+        graph.removeVertex(selected_node);
       } else if (selected_link) {
-        graph.removeLink(selected_link);
+        raph.removeEdge(selected_link);
       }
 
       selected_link = null;

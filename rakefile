@@ -1,0 +1,15 @@
+# coding: utf-8
+
+skulpt_dir = "skulpt"
+js_dir = "static/js"
+
+desc "generate skulpt-stdlib"
+task :sklib do
+    puts "## Generating Skulpt Standard Library"
+    cd "#{skulpt_dir}" do
+        system("python skulpt.py docbi -u");
+    end
+    puts "\n## Copying generated file into js directory"
+    system("cp -v #{skulpt_dir}/doc/static/skulpt-stdlib.js #{js_dir}")
+    puts "\n## Done"
+end

@@ -37,6 +37,8 @@ $(document).ready(function () {
         mypre.innerHTML = ''; 
         Sk.pre = "output";
         Sk.configure({output:outf, read:builtinRead}); 
-        eval(Sk.importMainWithBody("<stdin>",false,editor.getValue())); 
+        var code = editor.getValue();
+        code = "from graph import *\n\n" + code;
+        eval(Sk.importMainWithBody("<stdin>",false,code));
     } 
 });
