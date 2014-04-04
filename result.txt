@@ -1,0 +1,10 @@
+this[file[has[some[newlines[this
+file
+has
+some
+newlines
+this
+file
+has
+some
+newlines

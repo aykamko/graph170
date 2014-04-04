@@ -1,3 +1,5 @@
+var foo1, foo2, foo3;
+
 function LinkedList() {
     this.length = 0;
     this.first = null;
@@ -78,6 +80,10 @@ function EdgeLink(source, target, weight) {
     this.prev = null;
     this.next = null;
     this.weight = (weight) ? weight : 0;
+
+    this.source_label = this.source.label;
+    this.target_label = this.target.label;
+    this.label = this.source_label + "," + this.target_label;
     
     this.other = function(vertex) {
         if (vertex === this.source) {

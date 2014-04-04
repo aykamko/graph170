@@ -2,6 +2,7 @@
 
 skulpt_dir = "skulpt"
 js_dir = "static/js"
+py_dir = "static/py"
 
 desc "generate skulpt-stdlib"
 task :sklib do
@@ -12,4 +13,33 @@ task :sklib do
     puts "\n## Copying generated file into js directory"
     system("cp -v #{skulpt_dir}/doc/static/skulpt-stdlib.js #{js_dir}")
     puts "\n## Done"
+end
+
+desc "generate python_setup"
+task :graphpy do
+    puts "## Generating Python Setup Script"
+    graphpy = ""
+    File.open("#{py_dir}/graph.py", 'r') {|f|
+        graphpy = f.read
+        graphpy.gsub!("\n", "\\n")
+        f.close
+    }
+    if File.exists?("#{js_dir}/setup_python.js")
+        File.delete("#{js_dir}/setup_python.js")
+    end
+    setup = File.new("#{js_dir}/setup_python.js", "w+")
+    setup.write("var setup_code=\"")
+    setup.write(graphpy)
+    setup.write("\"\n\n")
+    File.open("#{js_dir}/pre_setup_python.js", "r") {|f|
+        setup.write(f.read)
+        f.close
+    }
+    puts "\n## Done"
+end
+
+desc "generate all stuff"
+task :default do
+    Rake::Task[:graphpy].execute
+    Rake::Task[:sklib].execute
 end
