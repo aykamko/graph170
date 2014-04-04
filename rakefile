@@ -22,6 +22,7 @@ task :graphpy do
     File.open("#{py_dir}/graph.py", 'r') {|f|
         graphpy = f.read
         graphpy.gsub!("\n", "\\n")
+        graphpy.gsub!('"', "'")
         f.close
     }
     if File.exists?("#{js_dir}/setup_python.js")
@@ -35,6 +36,17 @@ task :graphpy do
         setup.write(f.read)
         f.close
     }
+    puts "\n## Done"
+end
+
+desc "generate skulpt.min"
+task :skulpt do
+    puts "##Generating Skulpt"
+    cd "#{skulpt_dir}" do
+        system("python skulpt.py dist -u");
+    end
+    puts "\n## Copying generated skulpt distribution into js directory"
+    system("cp -v #{skulpt_dir}/dist/skulpt.js #{js_dir}")
     puts "\n## Done"
 end
 

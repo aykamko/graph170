@@ -41,19 +41,19 @@ class Edge:
     def __repr__(self):
         return 'Edge[' + self.label + ']'
 
-
 class Graph:
-    
     def __init__(self, name='G'):
         self.name = name
         self.vertices = {}
         self.edges = {}
 
-    def V(self):
-        return self.vertices.values()
-
-    def E(self):
-        return self.edges.values()
+    def __getattr__(self, attrname):
+        attrname = str(attrname)
+        if attrname == 'E':
+            return self.edges.values()
+        elif attrname == 'V':
+            return self.vertices.values()
+        raise AttributeError('Graph instance has no attribute ' + attrname)
 
     def add_vertex(self, label):
         label = str(label)
