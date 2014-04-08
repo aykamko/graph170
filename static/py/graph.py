@@ -11,11 +11,17 @@ class Vertex:
     def remove_incoming(self, edge):
         del self.incoming[edge.source_label]
 
+    def incoming_edges(self):
+        return self.incoming.values()
+
     def add_outgoing(self, edge):
         self.outgoing[edge.target_label] = edge
 
     def remove_outgoing(self, edge):
         del self.outgoing[edge.source_label]
+
+    def outgoing_edges(self):
+        return self.outgoing.values()
 
     def __repr__(self):
         return 'Vertex[' + self.label + ']'
@@ -55,6 +61,9 @@ class Graph:
             return self.vertices.values()
         raise AttributeError('Graph instance has no attribute ' + attrname)
 
+    def vertex(self, label):
+        return self.vertices[str(label)]
+
     def add_vertex(self, label):
         label = str(label)
         newVertex = Vertex(label)
@@ -75,5 +84,7 @@ class Graph:
     def _add_edge_internal(self, edge):
         self.edges[edge.label] = edge
 
+# constants and imports
+inf = float('inf')
 G = Graph()
 from graph import *

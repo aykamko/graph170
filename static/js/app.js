@@ -309,7 +309,7 @@ function keydown() {
       if (selected_node) {
         graph.removeVertex(selected_node);
       } else if (selected_link) {
-        raph.removeEdge(selected_link);
+        graph.removeEdge(selected_link);
       }
 
       selected_link = null;

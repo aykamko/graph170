@@ -1,0 +1,26 @@
+#######################
+def BFSTree():
+    bfs_tree = []
+
+    for v in G.V:
+        v.dist = inf
+
+    s = G.vertex(0)
+    s.dist = 0
+
+    Q = [s]
+    while Q != []:
+        u = Q.pop(0)
+        for e in u.outgoing_edges():
+            v = e.other(u)
+            if v.dist == inf:
+                Q += [v]
+                bfs_tree += [e]
+                v.dist = u.dist + 1
+
+    for e in G.E:
+        if e not in bfs_tree:
+            removeEdge(e)
+
+BFSTree()
+#######################
