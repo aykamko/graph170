@@ -60,10 +60,10 @@ function VertexLink(label) {
             incomingKeys = Object.keys(this.incoming),
             me = this;
         outgoingKeys.forEach( function(key) {
-            graph.removeEdge(me.outgoing[key], false);
+            graph.removeEdge(me.outgoing[key], null, false);
         });
         incomingKeys.forEach( function(key) {
-            graph.removeEdge(me.incoming[key], false);
+            graph.removeEdge(me.incoming[key], null, false);
         });
         this.outgoing = null;
         this.incoming = null;
@@ -123,9 +123,6 @@ function Graph(restartFunc) {
     this.edgeLinkedList = new LinkedList();
     
     this.addVertex = function(label, restart) {
-        if (restart == null) {
-            restart = true;
-        }
         var newVertex;
         if (label) {
             newVertex = new VertexLink(label);
@@ -145,9 +142,20 @@ function Graph(restartFunc) {
         return newVertex;
     }
 
+    this.getVertex = function(vertex) {
+        if (typeof vertex !== "object"
+                && !(vertex = this.vertices[vertex.toString()])) {
+            return;
+        } else if (Object.getPrototypeOf(vertex) !== VertexLink.prototype) {
+            return;
+        }
+
+        return vertex;
+    }
+
     this.removeVertex = function(vertex, restart) {
-        if (restart == null) {
-            restart = true;
+        if (!(vertex = this.getVertex(vertex))) {
+            return;
         }
         var prevVertex = vertex.prev;
         var nextVertex = vertex.next;
@@ -169,17 +177,15 @@ function Graph(restartFunc) {
         this.restartD3(restart);
     }
 
-    this.removeVertexByLabel = function(label, restart) {
-        var markedVertex = this.vertices[label.toString()];
-        if (markedVertex) {
-            this.removeVertex(markedVertex, restart);
+    this.colorVertexStroke = function(vertex, color, restart) {
+        if (!(vertex = this.getVertex(vertex))) {
+            return;
         }
+        vertex.stroke = color;
+        this.restartD3(restart);
     }
 
     this.addEdge = function(sourceLabel, targetLabel, restart) {
-        if (restart == null) {
-            restart = true;
-        }
         var source = this.vertices[sourceLabel];
         var target = this.vertices[targetLabel];
         if (!source || !target) {
@@ -203,10 +209,16 @@ function Graph(restartFunc) {
         return newEdge;
     }
 
-    this.removeEdge = function(edge, restart) {
-        if (restart == null) {
-            restart = true;
+    this.removeEdge = function(edge, targetLabel, restart) {
+        if (typeof edge !== "object") {
+            var _source = this.vertices[edge];
+            if (!(edge = _source.getOutgoingEdgeByLabel(targetLabel))) {
+                return;
+            }
+        } else if (Object.getPrototypeOf(edge) !== EdgeLink.prototype) {
+            return;
         }
+
         edge.source.removeOutgoingEdge(edge);
         edge.target.removeIncomingEdge(edge);
         var prevEdge = edge.prev,
@@ -227,19 +239,14 @@ function Graph(restartFunc) {
         this.restartD3(restart);
     }
 
-    this.removeEdgeByLabel = function(sourceLabel, targetLabel, restart) {
-        var source = this.vertices[sourceLabel];
-        var markedEdge = source.getOutgoingEdgeByLabel(targetLabel);
-        if (markedEdge) {
-            return this.removeEdge(markedEdge, restart);
-        }
-    }
-
     this.setRestartFunc = function(restartFunc) {
         this._restartFunc = restartFunc;
     }
 
     this.restartD3 = function(restart) {
+        if (restart == null) {
+            restart = true;
+        }
         if (restart && typeof this._restartFunc === "function") {
             this._restartFunc();
         }

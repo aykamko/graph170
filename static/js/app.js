@@ -163,7 +163,6 @@ function restart() {
     .attr('class', 'node')
     .attr('r', 30)
     .style('fill', function(d) { return (d === selected_node) ? 'lightgray' : 'white'; })
-    .style('stroke', function(d) { return 'black'; })
     .on('mouseover', function(d) {
       if(!mousedown_node || d === mousedown_node) return;
       // enlarge target node
@@ -219,13 +218,17 @@ function restart() {
       selected_node = null;
       restart();
     });
-
+  
   // show node IDs
   g.append('svg:text')
       .attr('x', 0)
       .attr('y', 11)
       .attr('class', 'id')
       .text(function(d) { return d.label; });
+
+  // set stroke for all nodes
+  circle.select('circle').style('stroke', 
+          function(d) { return (d.stroke != null) ? d.stroke : 'black'; })
 
   // remove old nodes
   circle.exit().remove();
