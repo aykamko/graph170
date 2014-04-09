@@ -74,8 +74,6 @@ var drag_line = svg.append('svg:path')
 var path = svg.append('svg:g').selectAll('path'),
     circle = svg.append('svg:g').selectAll('g');
 
-foo2 = path
-
 // mouse event vars
 var selected_node = null,
     selected_link = null,
@@ -92,11 +90,6 @@ function resetMouseVars() {
 // update force layout (called automatically each iteration)
 function tick() {
 
-  var sourceX_dict = {}, 
-      sourceY_dict = {},
-      targetX_dict = {},
-      targetY_dict = {};
-
   // draw directed edges with proper padding from node centers
   path.select('path.link').attr('d', function(link) {
     var deltaX = link.target.x - link.source.x,
@@ -110,34 +103,20 @@ function tick() {
         sourceY = link.source.y + (sourcePadding * normY),
         targetX = link.target.x - (targetPadding * normX),
         targetY = link.target.y - (targetPadding * normY);
-    sourceX_dict[link.label] = sourceX;
-    sourceY_dict[link.label] = sourceY;
-    targetX_dict[link.label] = targetX;
-    targetY_dict[link.label] = targetY;
+        link.targetX = targetX;
+        link.targetY = targetY;
+        link.angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
     return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
   })
 
   path.select('g.translate')
     .attr('transform', function(link) {
-       return 'translate(' + targetX_dict[link.label] + ',' + targetY_dict[link.label] + ')';
+       return 'translate(' + link.targetX + ',' + link.targetY + ')';
     });
   path.select('g.rotate')
     .attr('transform', function(link) {
-       var xDiff = targetX_dict[link.label] - sourceX_dict[link.label],
-           yDiff = targetY_dict[link.label] - sourceY_dict[link.label];
-       return 'rotate(' + (Math.atan2(yDiff, xDiff) * (180 / Math.PI)) + ')';
+       return 'rotate(' + link.angle + ')';
     });
-  path.select('g.scale')
-    .attr('transform', 'scale(4)');
-  path.select('g.translate2')
-    .attr('transform', function() {
-        var scaleFactor = 3/10,
-            xTranslate = -6 * scaleFactor,
-            yTranslate = -5 * scaleFactor;
-        return 'translate(' + xTranslate + ',' + yTranslate + ')';
-    });
-  path.select('g.scale2')
-    .attr('transform', 'scale(' + (3/10) + ')');
 
   circle.attr('transform', function(d) {
     return 'translate(' + d.x + ',' + d.y + ')';
@@ -169,8 +148,9 @@ function restart() {
   var marker = g.append('svg:g').attr('class', 'translate')
       .append('svg:g').attr('class', 'rotate')
       .append('svg:g').attr('class', 'scale')
+        .attr('transform', 'scale(4)')
       .append('svg:g').attr('class', 'translate2')
-
+        .attr('transform', 'translate(-1.8, -1.5)')
   marker.append('svg:clipPath')
     .attr('id', function(d) { return d.label + '-cpl' })
     .append('svg:rect')
@@ -178,12 +158,12 @@ function restart() {
       .attr('y', '0')
       .attr('width', '3')
       .attr('height', '3')
-  
   marker.append('svg:g').attr('clip-path', function(d) { return "url(#" + d.label + "-cpl)" })
-      .append('svg:g').attr('class', 'scale2')
-      .append('svg:g').attr('class', 'marker-fill')
-      .append('svg:path')
-        .attr('d', 'M 0 0 L 10 5 L 0 10')
+    .append('svg:g').attr('class', 'scale1')
+      .attr('transform', 'scale(0.3)')
+    .append('svg:g').attr('class', 'marker-fill')
+    .append('svg:path')
+      .attr('d', 'M 0 0 L 10 5 L 0 10')
 
   // remove old links
   path.exit().remove();
@@ -355,6 +335,7 @@ function keydown() {
   switch(d3.event.keyCode) {
     case 8: // backspace
     case 46: // delete
+      d3.event.preventDefault();
       if (selected_node) {
         graph.removeVertex(selected_node);
       } else if (selected_link) {
