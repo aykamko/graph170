@@ -16,6 +16,7 @@ def BFSTree():
             if v.dist == inf:
                 Q += [v]
                 bfs_tree += [e]
+                colorEdge(e, "red")
                 v.dist = u.dist + 1
 
     for e in G.E:
