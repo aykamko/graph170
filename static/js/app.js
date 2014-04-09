@@ -13,6 +13,8 @@ var windowHeight = $(window).height();
 var svgWidth = windowWidth - terWidth;
 
 var svg = d3.select('#body-container').append('svg')
+            .attr('xmlns', 'http://www.w3.org/2000/svg')
+            .attr('version', '2.0')
             .attr('class', 'graph')
             .attr('width', svgWidth + 'px');
 
@@ -51,6 +53,7 @@ var force = d3.layout.force()
     .on('tick', tick)
 
 // define arrow markers for graph links
+// TODO: ununsed!!!
 svg.append('svg:defs').append('svg:marker')
     .attr('id', 'end-arrow')
     .attr('viewBox', '0 -5 10 10')
@@ -60,18 +63,7 @@ svg.append('svg:defs').append('svg:marker')
     .attr('orient', 'auto')
   .append('svg:path')
     .attr('d', 'M0,-5L10,0L0,5')
-    .attr('fill', '#000');
-
-svg.append('svg:defs').append('svg:marker')
-    .attr('id', 'start-arrow')
-    .attr('viewBox', '0 -5 10 10')
-    .attr('refX', 4)
-    .attr('markerWidth', 3)
-    .attr('markerHeight', 3)
-    .attr('orient', 'auto')
-  .append('svg:path')
-    .attr('d', 'M10,-5L0,0L10,5')
-    .attr('fill', '#000');
+    .attr('fill', 'context-stroke')
 
 // line displayed when dragging new nodes
 var drag_line = svg.append('svg:path')
@@ -81,6 +73,8 @@ var drag_line = svg.append('svg:path')
 // handles to link and node element groups
 var path = svg.append('svg:g').selectAll('path'),
     circle = svg.append('svg:g').selectAll('g');
+
+foo2 = path
 
 // mouse event vars
 var selected_node = null,
@@ -97,8 +91,14 @@ function resetMouseVars() {
 
 // update force layout (called automatically each iteration)
 function tick() {
+
+  var sourceX_dict = {}, 
+      sourceY_dict = {},
+      targetX_dict = {},
+      targetY_dict = {};
+
   // draw directed edges with proper padding from node centers
-  path.attr('d', function(link) {
+  path.select('path.link').attr('d', function(link) {
     var deltaX = link.target.x - link.source.x,
         deltaY = link.target.y - link.source.y,
         dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 0.00001,
@@ -110,8 +110,34 @@ function tick() {
         sourceY = link.source.y + (sourcePadding * normY),
         targetX = link.target.x - (targetPadding * normX),
         targetY = link.target.y - (targetPadding * normY);
+    sourceX_dict[link.label] = sourceX;
+    sourceY_dict[link.label] = sourceY;
+    targetX_dict[link.label] = targetX;
+    targetY_dict[link.label] = targetY;
     return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
-  });
+  })
+
+  path.select('g.translate')
+    .attr('transform', function(link) {
+       return 'translate(' + targetX_dict[link.label] + ',' + targetY_dict[link.label] + ')';
+    });
+  path.select('g.rotate')
+    .attr('transform', function(link) {
+       var xDiff = targetX_dict[link.label] - sourceX_dict[link.label],
+           yDiff = targetY_dict[link.label] - sourceY_dict[link.label];
+       return 'rotate(' + (Math.atan2(yDiff, xDiff) * (180 / Math.PI)) + ')';
+    });
+  path.select('g.scale')
+    .attr('transform', 'scale(4)');
+  path.select('g.translate2')
+    .attr('transform', function() {
+        var scaleFactor = 3/10,
+            xTranslate = -6 * scaleFactor,
+            yTranslate = -5 * scaleFactor;
+        return 'translate(' + xTranslate + ',' + yTranslate + ')';
+    });
+  path.select('g.scale2')
+    .attr('transform', 'scale(' + (3/10) + ')');
 
   circle.attr('transform', function(d) {
     return 'translate(' + d.x + ',' + d.y + ')';
@@ -123,17 +149,11 @@ function restart() {
   // path (link) group
   path = path.data(graph.edgeList());
 
-  // update existing links
-  path.classed('selected', function(d) { return d === selected_link; })
-    .style('marker-start', function(d) { return ''; })
-    .style('marker-end', function(d) { return 'url(#end-arrow)'; });
-
   // add new links
-  path.enter().append('svg:path')
+  var g = path.enter().append('svg:g');
+  g.append('svg:path')
     .attr('class', 'link')
     .classed('selected', function(d) { return d === selected_link; })
-    .style('marker-start', function(d) { return ''; })
-    .style('marker-end', function(d) { return 'url(#end-arrow)'; })
     .on('mousedown', function(d) {
       if(d3.event.shiftKey) return;
 
@@ -143,18 +163,43 @@ function restart() {
       else selected_link = mousedown_link;
       selected_node = null;
       restart();
-    });
+    })
+
+  // adding markers to links
+  var marker = g.append('svg:g').attr('class', 'translate')
+      .append('svg:g').attr('class', 'rotate')
+      .append('svg:g').attr('class', 'scale')
+      .append('svg:g').attr('class', 'translate2')
+
+  marker.append('svg:clipPath')
+    .attr('id', function(d) { return d.label + '-cpl' })
+    .append('svg:rect')
+      .attr('x', '0')
+      .attr('y', '0')
+      .attr('width', '3')
+      .attr('height', '3')
+  
+  marker.append('svg:g').attr('clip-path', function(d) { return "url(#" + d.label + "-cpl)" })
+      .append('svg:g').attr('class', 'scale2')
+      .append('svg:g').attr('class', 'marker-fill')
+      .append('svg:path')
+        .attr('d', 'M 0 0 L 10 5 L 0 10')
 
   // remove old links
   path.exit().remove();
 
+  // update existing links and markers
+  path.select('path.link')
+    .classed('selected', function(d) { return d === selected_link; })
+    .style('stroke', function(d) { return (d.stroke != null) ? d.stroke : 'black' })
+  path.select('g.marker-fill')
+    .style('fill', function(d) { return (d.stroke != null) ? d.stroke : 'black' });
+
+  foo1 = path
+
   // circle (node) group
   // NB: the function arg is crucial here! nodes are known by id, not by index!
   circle = circle.data(graph.vertexList(), function(d) { return d.label });
-
-  // update existing nodes
-  circle.selectAll('circle')
-    .style('fill', function(d) { return (d === selected_node) ? 'lightgray' : 'white'; });
 
   // add new nodes
   var g = circle.enter().append('svg:g');
@@ -226,12 +271,13 @@ function restart() {
       .attr('class', 'id')
       .text(function(d) { return d.label; });
 
-  // set stroke for all nodes
-  circle.select('circle').style('stroke', 
-          function(d) { return (d.stroke != null) ? d.stroke : 'black'; })
-
   // remove old nodes
   circle.exit().remove();
+
+  // update existing nodes
+  circle.selectAll('circle')
+    .style('fill', function(d) { return (d === selected_node) ? 'lightgray' : 'white'; })
+    .style('stroke', function(d) { return (d.stroke != null) ? d.stroke : 'black'; });
 
   // set the graph in motion
   force.start();

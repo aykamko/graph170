@@ -209,7 +209,7 @@ function Graph(restartFunc) {
         return newEdge;
     }
 
-    this.removeEdge = function(edge, targetLabel, restart) {
+    this.getEdge = function(edge, targetLabel) {
         if (typeof edge !== "object") {
             var _source = this.vertices[edge];
             if (!(edge = _source.getOutgoingEdgeByLabel(targetLabel))) {
@@ -218,7 +218,13 @@ function Graph(restartFunc) {
         } else if (Object.getPrototypeOf(edge) !== EdgeLink.prototype) {
             return;
         }
+        return edge;
+    }
 
+    this.removeEdge = function(edge, targetLabel, restart) {
+        if (!(edge = this.getEdge(edge, targetLabel))) {
+            return;
+        }
         edge.source.removeOutgoingEdge(edge);
         edge.target.removeIncomingEdge(edge);
         var prevEdge = edge.prev,
@@ -236,6 +242,14 @@ function Graph(restartFunc) {
         this.edgeLinkedList.length -= 1;
         edge.markForRemoval();
         delete edge;
+        this.restartD3(restart);
+    }
+
+    this.colorEdgeStroke = function(edge, targetLabel, color, restart) {
+        if (!(edge = this.getEdge(edge, targetLabel))) {
+            return;
+        }
+        edge.stroke = color;
         this.restartD3(restart);
     }
 
