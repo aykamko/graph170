@@ -26,8 +26,8 @@ var resizeD3 = function() {
     windowWidth = $(window).width();
     windowHeight = $(window).height();
     svgWidth = Math.max(0, $(window).width() - terWidth);
+    force.size([svgWidth, windowHeight]).resume();
     svg.attr('width', svgWidth + 'px');
-    force.size([svgWidth + 'px', windowHeight + 'px']).resume();
 }
 
 // set up initial nodes and links

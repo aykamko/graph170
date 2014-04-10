@@ -1,24 +1,7 @@
 var foo1, foo2, foo3;
 
-function LinkedList() {
-    this.length = 0;
-    this.first = null;
-
-    LinkedList.prototype.toArray = function() {
-        var arr = new Array(this.length),
-            lnk = this.first;
-        for (var i = 0; i < this.length; i++) {
-            arr[i] = lnk;
-            lnk = lnk.next;
-        }
-        return arr;
-    }
-}
-
-function VertexLink(label) {
+function Vertex(label) {
     this.label = label.toString();
-    this.prev = null;
-    this.next = null;
 
     this.outgoing = {};
     this.outDegree = 0;
@@ -67,18 +50,12 @@ function VertexLink(label) {
         });
         this.outgoing = null;
         this.incoming = null;
-        this.firstEdge = null;
-        this.lastEdge = null;
-        this.prev = null;
-        this.next = null;
     }
 }
 
-function EdgeLink(source, target, weight) {
+function Edge(source, target, weight) {
     this.source = source;
     this.target = target;
-    this.prev = null;
-    this.next = null;
     this.weight = (weight) ? weight : 0;
 
     this.source_label = this.source.label;
@@ -106,38 +83,25 @@ function EdgeLink(source, target, weight) {
     this.markForRemoval = function() {
         this.source = null;
         this.target = null;
-        this.prev = null;
-        this.next = null;
     }
 }
 
 function Graph(restartFunc) {
     this._restartFunc = restartFunc;
     this.lastVertexLabel = -1;
-    this.firstVertex = null;
-    this.lastVertex = null;
-    this.firstEdge = null;
-    this.lastEdge = null;
     this.vertices = {};
-    this.vertexLinkedList = new LinkedList();
-    this.edgeLinkedList = new LinkedList();
+    this.vertexArray = [];
+    this.edgeArray = [];
     
     this.addVertex = function(label, restart) {
         var newVertex;
         if (label) {
-            newVertex = new VertexLink(label);
+            newVertex = new Vertex(label);
         } else {
-            newVertex = new VertexLink(++(this.lastVertexLabel));
+            newVertex = new Vertex((label = ++(this.lastVertexLabel)));
         }
-        if (this.lastVertex) {
-            this.lastVertex.next = newVertex;
-        } else {
-            this.firstVertex = newVertex;
-        }
-        newVertex.prev = this.lastVertex;
-        this.lastVertex = newVertex;
-        this.vertices[this.lastVertexLabel] = newVertex;
-        this.vertexLinkedList.length += 1;
+        this.vertexArray.push(newVertex);
+        this.vertices[label] = newVertex;
         this.restartD3(restart);
         return newVertex;
     }
@@ -146,10 +110,9 @@ function Graph(restartFunc) {
         if (typeof vertex !== "object"
                 && !(vertex = this.vertices[vertex.toString()])) {
             return;
-        } else if (Object.getPrototypeOf(vertex) !== VertexLink.prototype) {
+        } else if (Object.getPrototypeOf(vertex) !== Vertex.prototype) {
             return;
         }
-
         return vertex;
     }
 
@@ -157,23 +120,13 @@ function Graph(restartFunc) {
         if (!(vertex = this.getVertex(vertex))) {
             return;
         }
-        var prevVertex = vertex.prev;
-        var nextVertex = vertex.next;
-        if (prevVertex) {
-            prevVertex.next = vertex.next;
-        } else {
-            this.firstVertex = nextVertex;
+        var markedIndex;
+        if ((markedIndex = this.vertexArray.indexOf(vertex)) > -1) {
+            this.vertexArray.splice(markedIndex, 1);
         }
-        if (nextVertex) {
-            nextVertex.prev = vertex.prev;
-        } else {
-            this.lastVertex = prevVertex;
-        }
-        var label = vertex.label;
         vertex.markForRemoval(this);
-        delete this.vertices[label];
+        delete this.vertices[vertex.label];
         delete vertex;
-        this.vertexLinkedList.length -= 1;
         this.restartD3(restart);
     }
 
@@ -186,25 +139,17 @@ function Graph(restartFunc) {
     }
 
     this.addEdge = function(sourceLabel, targetLabel, restart) {
-        var source = this.vertices[sourceLabel];
-        var target = this.vertices[targetLabel];
+        var source = this.vertices[sourceLabel],
+            target = this.vertices[targetLabel];
         if (!source || !target) {
             return;
         }
-        var newEdge = new EdgeLink(source, target);
+        var newEdge = new Edge(source, target);
         if (!source.addOutgoingEdge(newEdge) 
             || !target.addIncomingEdge(newEdge)) {
             return;
         }
-        if (this.lastEdge) {
-            this.lastEdge.next = newEdge;
-            newEdge.prev = this.lastEdge;
-        } else {
-            this.firstEdge = newEdge;
-        }
-        this.lastEdge = newEdge;
-
-        this.edgeLinkedList.length += 1;
+        this.edgeArray.push(newEdge);
         this.restartD3(restart);
         return newEdge;
     }
@@ -215,7 +160,7 @@ function Graph(restartFunc) {
             if (!(edge = _source.getOutgoingEdgeByLabel(targetLabel))) {
                 return;
             }
-        } else if (Object.getPrototypeOf(edge) !== EdgeLink.prototype) {
+        } else if (Object.getPrototypeOf(edge) !== Edge.prototype) {
             return;
         }
         return edge;
@@ -227,19 +172,10 @@ function Graph(restartFunc) {
         }
         edge.source.removeOutgoingEdge(edge);
         edge.target.removeIncomingEdge(edge);
-        var prevEdge = edge.prev,
-            nextEdge = edge.next;
-        if (prevEdge) {
-            prevEdge.next = nextEdge;
-        } else {
-            this.firstEdge = nextEdge;
+        var markedIndex;
+        if ((markedIndex = this.edgeArray.indexOf(edge)) > -1) {
+            this.edgeArray.splice(markedIndex, 1);
         }
-        if (nextEdge) {
-            nextEdge.prev = prevEdge;
-        } else {
-            this.lastEdge = prevEdge;
-        }
-        this.edgeLinkedList.length -= 1;
         edge.markForRemoval();
         delete edge;
         this.restartD3(restart);
@@ -267,12 +203,10 @@ function Graph(restartFunc) {
     }
 
     this.vertexList = function() {
-        this.vertexLinkedList.first = this.firstVertex;
-        return this.vertexLinkedList;
+        return this.vertexArray;
     }
 
     this.edgeList = function() {
-        this.edgeLinkedList.first = this.firstEdge;
-        return this.edgeLinkedList;
+        return this.edgeArray;
     }
 }
