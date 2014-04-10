@@ -10,11 +10,9 @@ var terWidth = $(terminal).width();
 var windowWidth = $(window).width();
 var windowHeight = $(window).height();
 
-var svgWidth = windowWidth - terWidth;
+var svgWidth = Math.max(windowWidth - terWidth, 0);
 
 var svg = d3.select('#body-container').append('svg')
-            .attr('xmlns', 'http://www.w3.org/2000/svg')
-            .attr('version', '2.0')
             .attr('class', 'graph')
             .attr('width', svgWidth + 'px');
 
@@ -27,7 +25,7 @@ $(window).resize( function() {
 var resizeD3 = function() {
     windowWidth = $(window).width();
     windowHeight = $(window).height();
-    svgWidth = $(window).width() - terWidth;
+    svgWidth = Math.max(0, $(window).width() - terWidth);
     svg.attr('width', svgWidth + 'px');
     force.size([svgWidth + 'px', windowHeight + 'px']).resume();
 }
@@ -94,7 +92,7 @@ function tick() {
   path.select('path.link').attr('d', function(link) {
     var deltaX = link.target.x - link.source.x,
         deltaY = link.target.y - link.source.y,
-        dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 0.00001,
+        dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 0.0000001,
         normX = deltaX / dist,
         normY = deltaY / dist,
         sourcePadding = 30,
