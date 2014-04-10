@@ -12,9 +12,10 @@ var windowHeight = $(window).height();
 
 var svgWidth = Math.max(windowWidth - terWidth, 0);
 
-var svg = d3.select('#body-container').append('svg')
-            .attr('class', 'graph')
-            .attr('width', svgWidth + 'px');
+var svg = d3.select('#graph-div').append('svg')
+                .attr('class', 'graph')
+                .style('height', windowHeight + 'px')
+                .style('width', svgWidth + 'px');
 
 var resizeTimeout;
 $(window).resize( function() {
@@ -27,7 +28,7 @@ var resizeD3 = function() {
     windowHeight = $(window).height();
     svgWidth = Math.max(0, $(window).width() - terWidth);
     force.size([svgWidth, windowHeight]).resume();
-    svg.attr('width', svgWidth + 'px');
+    svg.style('width', svgWidth + 'px');
 }
 
 // set up initial nodes and links
@@ -303,15 +304,6 @@ function mouseup() {
 
   // clear mouse event vars
   resetMouseVars();
-}
-
-function spliceLinksForNode(node) {
-  var toSplice = links.filter(function(l) {
-    return (l.source === node || l.target === node);
-  });
-  toSplice.map(function(l) {
-    links.splice(links.indexOf(l), 1);
-  });
 }
 
 // only respond once per keydown

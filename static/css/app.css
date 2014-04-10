@@ -2,49 +2,28 @@
 /** * Eric Meyer's Reset CSS v2.0 (http://meyerweb.com/eric/tools/css/reset/) * http://cssreset.com */html, body, div, span, applet, object, iframe,h1, h2, h3, h4, h5, h6, p, blockquote, pre,a, abbr, acronym, address, big, cite, code,del, dfn, em, img, ins, kbd, q, s, samp,small, strike, strong, sub, sup, tt, var,b, u, i, center,dl, dt, dd, ol, ul, li,fieldset, form, label, legend,table, caption, tbody, tfoot, thead, tr, th, td,article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary,time, mark, audio, video {	margin: 0;	padding: 0;	border: 0;	font-size: 100%;	font: inherit;	vertical-align: baseline;}/* HTML5 display-role reset for older browsers */article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {	display: block;}body {	line-height: 1;}ol, ul {	list-style: none;}blockquote, q {	quotes: none;}blockquote:before, blockquote:after,q:before, q:after {	content: '';	content: none;}table {	border-collapse: collapse;	border-spacing: 0;}
 
 /*----- General --------------------------------------------------------------*/
-html, body {
-  height: 100%;
+* {
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+    box-sizing: border-box;         /* Opera/IE 8+ */
 }
 
 body {
-    margin: 0;
-    background-color: #EEE;
-}
-
-p {
-  margin: 0;
-  padding: 0;
+  background-color: #EEE;
 }
 
 #body-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-}
-
-/*----- CodeMirror -----------------------------------------------------------*/
-textarea {
-    margin: 0;
-    padding: 0;
-}
-
-#terminal {
+  display: table;
   position: absolute;
   top: 0;
-  right: 0;
-  width: 550px;
+  left: 0;
   height: 100%;
-  display: table;
-  border-collapse: separate;
-  border-spacing: 0px;
+  width: 100%;
 }
 
-#terminal > div {
+/*----- CSS Table ------------------------------------------------------------*/
+#body-container > div {
   display: table-row;
-  padding: 0;
-  margin: 0;
 }
 
 .output-row {
@@ -53,6 +32,19 @@ textarea {
 
 .button-row {
   height: 80px;
+}
+
+.graph-cell {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(100% - 500px);
+}
+
+.code-cell, .button-cell, .output-cell {
+  height: 100%;
+  width: 550px;
+  float: right;
 }
 
 .run {
@@ -73,12 +65,11 @@ textarea {
   color: white;
   font-family: monospace;
 }
-
 /*----- D3 -------------------------------------------------------------------*/
+
 #graph {
-    position: absolute;
-    top: 0;
-    left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 svg {
