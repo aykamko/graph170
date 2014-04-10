@@ -12,7 +12,7 @@ var windowHeight = $(window).height();
 
 var svgWidth = Math.max(windowWidth - terWidth, 0);
 
-var svg = d3.select('#graph-div').append('svg')
+var svg = d3.select('#graph-cell').append('svg')
                 .attr('class', 'graph')
                 .style('height', windowHeight + 'px')
                 .style('width', svgWidth + 'px');

@@ -34,17 +34,19 @@ body {
   height: 80px;
 }
 
-.graph-cell {
+#graph-cell {
   position: absolute;
   top: 0;
   bottom: 0;
   width: calc(100% - 500px);
+  z-index: -1;
 }
 
 .code-cell, .button-cell, .output-cell {
   height: 100%;
   width: 550px;
   float: right;
+  z-index: 1;
 }
 
 .run {
