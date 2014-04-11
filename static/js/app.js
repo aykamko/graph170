@@ -1,12 +1,14 @@
 var graph;
+var force;
+var forceEnabled;
+var toggleForce;
 
 $(document).ready(function() {
 
 // set up SVG for D3
 var colors = d3.scale.category10();
 
-var terminal = $('.CodeMirror')[0];
-var terWidth = $(terminal).width();
+var terWidth = $('.code-cell').width();
 var windowWidth = $(window).width();
 var windowHeight = $(window).height();
 
@@ -43,13 +45,32 @@ graph.addEdge(0, 1, false);
 graph.addEdge(1, 2, false);
 
 // init D3 force layout
-var force = d3.layout.force()
+force = d3.layout.force()
     .nodes(graph.vertexList())
     .links(graph.edgeList())
     .size([svgWidth, windowHeight])
     .linkDistance(200)
     .charge(-800)
     .on('tick', tick)
+
+forceEnabled = true;
+toggleForce = function() {
+    if (forceEnabled) {
+        force.stop();
+        forceEnabled = false;
+    } else {
+        force.start();
+        forceEnabled = true;
+    }
+    console.log('force: ' + forceEnabled);
+}
+
+d3.select('#graph-cell').append('div')
+    .attr('class', 'force-toggle-div')
+    .append('button')
+        .attr('type', 'button')
+        .attr('class', 'force-toggle')
+        .attr('onclick', 'toggleForce()')
 
 // define arrow markers for graph links
 // TODO: ununsed!!!
@@ -120,61 +141,12 @@ function tick() {
   circle.attr('transform', function(d) {
     return 'translate(' + d.x + ',' + d.y + ')';
   });
+
+  foo1 = circle;
 }
 
 // update graph (called when needed)
 function restart() {
-  // path (link) group
-  path = path.data(graph.edgeList());
-
-  // add new links
-  var g = path.enter().append('svg:g');
-  g.append('svg:path')
-    .attr('class', 'link')
-    .classed('selected', function(d) { return d === selected_link; })
-    .on('mousedown', function(d) {
-      if(d3.event.shiftKey) return;
-
-      // select link
-      mousedown_link = d;
-      if(mousedown_link === selected_link) selected_link = null;
-      else selected_link = mousedown_link;
-      selected_node = null;
-      restart();
-    })
-
-  // adding markers to links
-  var marker = g.append('svg:g').attr('class', 'translate')
-      .append('svg:g').attr('class', 'rotate')
-      .append('svg:g').attr('class', 'scale')
-        .attr('transform', 'scale(4)')
-      .append('svg:g').attr('class', 'translate2')
-        .attr('transform', 'translate(-1.8, -1.5)')
-  marker.append('svg:clipPath')
-    .attr('id', function(d) { return d.label + '-cpl' })
-    .append('svg:rect')
-      .attr('x', '0')
-      .attr('y', '0')
-      .attr('width', '3')
-      .attr('height', '3')
-  marker.append('svg:g').attr('clip-path', function(d) { return "url(#" + d.label + "-cpl)" })
-    .append('svg:g').attr('class', 'scale1')
-      .attr('transform', 'scale(0.3)')
-    .append('svg:g').attr('class', 'marker-fill')
-    .append('svg:path')
-      .attr('d', 'M 0 0 L 10 5 L 0 10')
-
-  // remove old links
-  path.exit().remove();
-
-  // update existing links and markers
-  path.select('path.link')
-    .classed('selected', function(d) { return d === selected_link; })
-    .style('stroke', function(d) { return (d.stroke != null) ? d.stroke : 'black' })
-  path.select('g.marker-fill')
-    .style('fill', function(d) { return (d.stroke != null) ? d.stroke : 'black' });
-
-  foo1 = path
 
   // circle (node) group
   // NB: the function arg is crucial here! nodes are known by id, not by index!
@@ -182,6 +154,10 @@ function restart() {
 
   // add new nodes
   var g = circle.enter().append('svg:g');
+
+  g.attr('transform', function(d) {
+    return 'translate(' + d.x + ',' + d.y + ')';
+  });
 
   g.append('svg:circle')
     .attr('class', 'node')
@@ -199,6 +175,7 @@ function restart() {
     })
     .on('mousedown', function(d) {
       if(d3.event.shiftKey) return;
+      console.log(d.label);
 
       // select node
       mousedown_node = d;
@@ -258,8 +235,79 @@ function restart() {
     .style('fill', function(d) { return (d === selected_node) ? 'lightgray' : 'white'; })
     .style('stroke', function(d) { return (d.stroke != null) ? d.stroke : 'black'; });
 
+  // path (link) group
+  path = path.data(graph.edgeList(), function(d) { return d.label });
+
+  // add new links
+  var g = path.enter().append('svg:g');
+  g.append('svg:path')
+    .attr('class', 'link')
+    .classed('selected', function(d) { return d === selected_link; })
+    .on('mousedown', function(d) {
+      if(d3.event.shiftKey) return;
+
+      // select link
+      mousedown_link = d;
+      if(mousedown_link === selected_link) selected_link = null;
+      else selected_link = mousedown_link;
+      selected_node = null;
+      restart();
+    }).attr('d', function(link) {
+        var deltaX = link.target.x - link.source.x,
+            deltaY = link.target.y - link.source.y,
+            dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 0.0000001,
+            normX = deltaX / dist,
+            normY = deltaY / dist,
+            sourcePadding = 30,
+            targetPadding = 35,
+            sourceX = link.source.x + (sourcePadding * normX),
+            sourceY = link.source.y + (sourcePadding * normY),
+            targetX = link.target.x - (targetPadding * normX),
+            targetY = link.target.y - (targetPadding * normY);
+            link.targetX = targetX;
+            link.targetY = targetY;
+            link.angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+        return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
+    })
+   
+  // adding markers to links
+  var marker = g.append('svg:g')
+        .attr('class', 'translate')
+        .attr('transform', function(link) { return 'translate(' + link.targetX + ',' + link.targetY + ')'; })
+      .append('svg:g').attr('class', 'rotate')
+        .attr('transform', function(link) { return 'rotate(' + link.angle + ')'; })
+      .append('svg:g').attr('class', 'scale')
+        .attr('transform', 'scale(4)')
+      .append('svg:g').attr('class', 'translate2')
+        .attr('transform', 'translate(-1.8, -1.5)')
+  marker.append('svg:clipPath')
+    .attr('id', function(d) { return d.label + '-cpl' })
+    .append('svg:rect')
+      .attr('x', '0')
+      .attr('y', '0')
+      .attr('width', '3')
+      .attr('height', '3')
+  marker.append('svg:g').attr('clip-path', function(d) { return "url(#" + d.label + "-cpl)" })
+    .append('svg:g').attr('class', 'scale1')
+      .attr('transform', 'scale(0.3)')
+    .append('svg:g').attr('class', 'marker-fill')
+    .append('svg:path')
+      .attr('d', 'M 0 0 L 10 5 L 0 10')
+
+  // remove old links
+  path.exit().remove();
+
+  // update existing links and markers
+  path.select('path.link')
+    .classed('selected', function(d) { return d === selected_link; })
+    .style('stroke', function(d) { return (d.stroke != null) ? d.stroke : 'black' })
+  path.select('g.marker-fill')
+    .style('fill', function(d) { return (d.stroke != null) ? d.stroke : 'black' });
+
   // set the graph in motion
-  force.start();
+  if (forceEnabled) {
+    force.start();
+  }
 }
 
 graph.setRestartFunc(restart);
@@ -317,7 +365,20 @@ function keydown() {
 
   // ctrl
   if(d3.event.shiftKey) {
-    circle.call(force.drag);
+    circle.call(force.drag().on('drag.force', function(node) {
+        var x = d3.event.x,
+            y = d3.event.y;
+        d3.select(this).attr('transform', 'translate(' + x + ',' + y + ')');
+        node.px = x;
+        node.py = y;
+        node.x = x;
+        node.y = y;
+        if (forceEnabled) {
+            force.resume();
+        } else {
+            tick();
+        }
+    }));
     svg.classed('ctrl', true);
   }
 

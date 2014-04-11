@@ -151,6 +151,7 @@ function Graph(restartFunc) {
         }
         this.edgeArray.push(newEdge);
         this.restartD3(restart);
+        console.log(newEdge.label);
         return newEdge;
     }
 
