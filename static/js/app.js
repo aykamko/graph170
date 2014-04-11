@@ -58,19 +58,19 @@ toggleForce = function() {
     if (forceEnabled) {
         force.stop();
         forceEnabled = false;
+        d3.select('.force-toggle').html('Force: OFF');
     } else {
         force.start();
         forceEnabled = true;
+        d3.select('.force-toggle').html('Force: ON');
     }
-    console.log('force: ' + forceEnabled);
 }
 
-d3.select('#graph-cell').append('div')
-    .attr('class', 'force-toggle-div')
-    .append('button')
-        .attr('type', 'button')
-        .attr('class', 'force-toggle')
-        .attr('onclick', 'toggleForce()')
+d3.select('#graph-cell').append('button')
+    .attr('type', 'button')
+    .attr('class', 'force-toggle')
+    .attr('onclick', 'toggleForce()')
+    .html('Force: ON')
 
 // define arrow markers for graph links
 // TODO: ununsed!!!
@@ -123,9 +123,12 @@ function tick() {
         sourceY = link.source.y + (sourcePadding * normY),
         targetX = link.target.x - (targetPadding * normX),
         targetY = link.target.y - (targetPadding * normY);
+        link.sourceX = sourceX;
+        link.sourceY = sourceY;
         link.targetX = targetX;
         link.targetY = targetY;
         link.angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+        link.d3_path = d3.select(this);
     return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
   })
 
@@ -137,12 +140,22 @@ function tick() {
     .attr('transform', function(link) {
        return 'rotate(' + link.angle + ')';
     });
+  path.select('text.weight')
+      .attr('transform', function(link) { 
+          var pathNode = link.d3_path.node();
+          link.mid = pathNode.getPointAtLength(pathNode.getTotalLength() / 2);
+          return 'translate(' + link.mid['x'] + ',' + (link.mid['y'] + 9) + ')'; 
+      })
+      .attr('x', function(link) {
+          return 18 * Math.cos((link.angle - 90) * (Math.PI / 180));
+      })
+      .attr('y', function(link) {
+          return 18 * Math.sin((link.angle - 90) * (Math.PI / 180)); 
+      })
 
   circle.attr('transform', function(d) {
     return 'translate(' + d.x + ',' + d.y + ')';
   });
-
-  foo1 = circle;
 }
 
 // update graph (called when needed)
@@ -175,7 +188,6 @@ function restart() {
     })
     .on('mousedown', function(d) {
       if(d3.event.shiftKey) return;
-      console.log(d.label);
 
       // select node
       mousedown_node = d;
@@ -264,11 +276,29 @@ function restart() {
             sourceY = link.source.y + (sourcePadding * normY),
             targetX = link.target.x - (targetPadding * normX),
             targetY = link.target.y - (targetPadding * normY);
+            link.sourceX = sourceX;
+            link.sourceY = sourceY;
             link.targetX = targetX;
             link.targetY = targetY;
             link.angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+            link.d3_path = d3.select(this);
         return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
     })
+
+  g.append('svg:text')
+      .attr('class', 'weight')
+      .attr('transform', function(link) { 
+          var pathNode = link.d3_path.node();
+          link.mid = pathNode.getPointAtLength(pathNode.getTotalLength() / 2);
+          return 'translate(' + link.mid['x'] + ',' + (link.mid['y'] + 9) + ')'; 
+      })
+      .attr('x', function(link) {
+          return 18 * Math.cos((link.angle - 90) * (Math.PI / 180));
+      })
+      .attr('y', function(link) {
+          return 18 * Math.sin((link.angle - 90) * (Math.PI / 180)); 
+      })
+      .text(function(d) { return d.weight; });
    
   // adding markers to links
   var marker = g.append('svg:g')
@@ -330,6 +360,14 @@ function mousedown() {
   restart();
 }
 
+function window_mousedown() {
+    if (svg.classed('active')) {
+        svg.classed('focused', true);
+    } else {
+        svg.classed('focused', false);
+    }
+}
+
 function mousemove() {
   if(!mousedown_node) return;
 
@@ -387,6 +425,11 @@ function keydown() {
     case 8: // backspace
     case 46: // delete
       d3.event.preventDefault();
+
+      if (!svg.classed('focused')) {
+          return;
+      }
+
       if (selected_node) {
         graph.removeVertex(selected_node);
       } else if (selected_link) {
@@ -418,6 +461,8 @@ svg.on('mousedown', mousedown)
   .on('mouseup', mouseup);
 d3.select(window)
   .on('keydown', keydown)
-  .on('keyup', keyup);
+  .on('keyup', keyup)
+  .on('mousedown', window_mousedown);
 restart();
+
 });

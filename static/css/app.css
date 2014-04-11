@@ -77,18 +77,13 @@ body {
   z-index: 0;
 }
 
-.force-toggle-div {
+.force-toggle {
   position: absolute;
-  width: 50px;
-  height: 20px;
+  width: 100px;
+  height: 40px;
   top: 15px;
   right: 15px;
-}
-
-.force-toggle {
-  width: 100%;
-  height: 100%;
-  background: black;
+  font-size: 16px;
 }
 
 svg {
@@ -148,4 +143,14 @@ text {
 text.id {
   text-anchor: middle;
   font-weight: bold;
+}
+
+text.weight {
+  font-size: 22px;
+  text-anchor: middle;
+  cursor: default;
+}
+
+svg:not(.active):not(.ctrl) text.weight {
+  cursor: pointer;
 }

@@ -56,7 +56,7 @@ function Vertex(label) {
 function Edge(source, target, weight) {
     this.source = source;
     this.target = target;
-    this.weight = (weight) ? weight : 0;
+    this.weight = (weight) ? weight : 1;
 
     this.source_label = this.source.label;
     this.target_label = this.target.label;
@@ -151,7 +151,6 @@ function Graph(restartFunc) {
         }
         this.edgeArray.push(newEdge);
         this.restartD3(restart);
-        console.log(newEdge.label);
         return newEdge;
     }
 

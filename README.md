@@ -2,7 +2,6 @@ graph170
 ========
 
 TODO:
-- Toggle switch for D3 Force
 - Weightable edges
   + Switch for this feature
 - Implement special Queue, Stack, Min/MaxHeap data structure classes
