@@ -97,14 +97,30 @@ var path = svg.append('svg:g').selectAll('path'),
 // mouse event vars
 var selected_node = null,
     selected_link = null,
+    selected_weight_link = null,
     mousedown_link = null,
     mousedown_node = null,
+    mousedown_weight_link = null,
     mouseup_node = null;
+
+// cursor index for edge weight editing
+var weight_char_index = null;
+function increment_weight_char_index(weightStr) {
+    weight_char_index = Math.min(weight_char_index + 1, weightStr.length);
+}
+function decrement_weight_char_index() {
+    weight_char_index = Math.max(0, weight_char_index - 1);
+}
+
+// svg:g and cursor for selected weight
+var selected_weight_g = null,
+    cursor_rect = null;
 
 function resetMouseVars() {
   mousedown_node = null;
   mouseup_node = null;
   mousedown_link = null;
+  mousedown_weight_link = null;
 }
 
 // update force layout (called automatically each iteration)
@@ -140,17 +156,44 @@ function tick() {
     .attr('transform', function(link) {
        return 'rotate(' + link.angle + ')';
     });
-  path.select('text.weight')
+  var weight_g = path.select('g.weight-g')
       .attr('transform', function(link) { 
           var pathNode = link.d3_path.node();
           link.mid = pathNode.getPointAtLength(pathNode.getTotalLength() / 2);
-          return 'translate(' + link.mid['x'] + ',' + (link.mid['y'] + 9) + ')'; 
+          link.x_perp = 18 * Math.cos((link.angle - 90) * (Math.PI / 180));
+          link.y_perp = 18 * Math.sin((link.angle - 90) * (Math.PI / 180));
+          link.weight_svg_length =
+              d3.select(this).select('text').node().getComputedTextLength();
+          return 'translate(' + link.mid['x'] + ',' + link.mid['y'] + ')'; 
       })
+
+  weight_g.select('text')
       .attr('x', function(link) {
-          return 18 * Math.cos((link.angle - 90) * (Math.PI / 180));
+          return link.x_perp;
       })
       .attr('y', function(link) {
-          return 18 * Math.sin((link.angle - 90) * (Math.PI / 180)); 
+          return link.y_perp + 8;
+      })
+
+  weight_g.select('rect.weight-rect')
+      .attr('width', function(link) {
+          return link.weight_svg_length + 8;
+      })
+      .attr('x', function(link) {
+          return link.x_perp - ((link.weight_svg_length + 7) / 2);
+      })
+      .attr('y', function(link) {
+          return link.y_perp - 10;
+      })
+
+  weight_g.select('rect.cursor')
+      .attr('x', function(link) {
+          var weightStr = link.weight.toString(),
+              xAdjust = link.weight_svg_length / weightStr.length;
+          return link.x_perp - (link.weight_svg_length / 2) + (xAdjust * weight_char_index) - 0.5;
+      })
+      .attr('y', function(link) {
+          return link.y_perp - 8;
       })
 
   circle.attr('transform', function(d) {
@@ -285,20 +328,83 @@ function restart() {
         return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
     })
 
-  g.append('svg:text')
-      .attr('class', 'weight')
+  var weight_g = g.append('svg:g')
+      .attr('class', 'weight-g')
       .attr('transform', function(link) { 
+          var perp_angle_radians = (link.angle - 90) * (Math.PI / 180);
+          link.x_perp = 18 * Math.cos(perp_angle_radians);
+          link.y_perp = 18 * Math.sin(perp_angle_radians);
           var pathNode = link.d3_path.node();
           link.mid = pathNode.getPointAtLength(pathNode.getTotalLength() / 2);
-          return 'translate(' + link.mid['x'] + ',' + (link.mid['y'] + 9) + ')'; 
+          return 'translate(' + link.mid['x'] + ',' + link.mid['y'] + ')'; 
       })
+
+  weight_g.append('svg:g').append('svg:rect')
+      .attr('class', 'weight-rect')
+      .attr('width', 20)
+      .attr('height', 20)
+      .attr('rx', '10')
+      .attr('ry', '10')
       .attr('x', function(link) {
-          return 18 * Math.cos((link.angle - 90) * (Math.PI / 180));
+          return link.x_perp - 10;
       })
       .attr('y', function(link) {
-          return 18 * Math.sin((link.angle - 90) * (Math.PI / 180)); 
+          return link.y_perp - 10;
       })
-      .text(function(d) { return d.weight; });
+      .on('mousedown', function(d) {
+          // select node
+          mousedown_weight_link = d;
+          selected_weight_link = d;
+          selected_weight_g = d3.select(this.parentNode);
+          weight_char_index = d.weight.toString().length;
+
+          cursor_rect = selected_weight_g.append('svg:rect')
+              .attr('class', 'cursor')
+              .attr('height', 16.5)
+              .attr('width', 1.5)
+              .style('fill', 'black')
+              .attr('x', function(link) {
+                  var weightStr = link.weight.toString(),
+                      xAdjust = link.weight_svg_length / weightStr.length;
+                  return link.x_perp - (link.weight_svg_length / 2) + (xAdjust * weight_char_index) - 1;
+              })
+              .attr('y', function(link) {
+                  return link.y_perp - 8;
+              })
+          
+              /* Blinking doesn't work :(
+          cursor_rect.append('svg:set')
+              .attr('id', 'show-cursor')
+              .attr('attributeName', 'visibility')
+              .attr('attributeType', 'CSS')
+              .attr('to', 'visible')
+              .attr('begin', '0s; hide-cursor.end')
+              .attr('dur', '1s')
+              .attr('fill', 'frozen')
+
+          cursor_rect.append('svg:set')
+              .attr('id', 'hide-cursor')
+              .attr('attributeName', 'visibility')
+              .attr('attributeType', 'CSS')
+              .attr('to', 'hidden')
+              .attr('begin', 'show-cursor.end')
+              .attr('dur', '1s')
+              .attr('fill', 'frozen')
+              */
+
+      }).on('mouseup', function(d) {
+          if (!mousedown_weight_link) return;
+          mousedown_weight_link = null;
+      })
+
+   weight_g.append('svg:text')
+      .attr('x', function(link) {
+          return link.x_perp;
+      })
+      .attr('y', function(link) {
+          return link.y_perp + 8;
+      })
+      .attr('class', 'weight')
    
   // adding markers to links
   var marker = g.append('svg:g')
@@ -333,6 +439,8 @@ function restart() {
     .style('stroke', function(d) { return (d.stroke != null) ? d.stroke : 'black' })
   path.select('g.marker-fill')
     .style('fill', function(d) { return (d.stroke != null) ? d.stroke : 'black' });
+  path.select('text.weight')
+    .text(function(d) { return d.weight; });
 
   // set the graph in motion
   if (forceEnabled) {
@@ -349,7 +457,12 @@ function mousedown() {
   // because :active only works in WebKit?
   svg.classed('active', true);
 
-  if(d3.event.shiftKey || mousedown_node || mousedown_link) return;
+  if(d3.event.shiftKey || mousedown_node || mousedown_link || mousedown_weight_link) return;
+
+  //such bad code
+  if(selected_weight_link) {
+    jQuery.event.trigger({ type : 'keydown', which : 13 }); // simulate press enter
+  }
 
   // insert new node at point
   var point = d3.mouse(this),
@@ -400,7 +513,7 @@ function keydown() {
 
   if(lastKeyDown !== -1) return;
   lastKeyDown = d3.event.keyCode;
-
+ 
   // ctrl
   if(d3.event.shiftKey) {
     circle.call(force.drag().on('drag.force', function(node) {
@@ -418,6 +531,36 @@ function keydown() {
         }
     }));
     svg.classed('ctrl', true);
+  }
+
+  // Editing Edge Weights
+  if (selected_weight_link) {
+      var weightStr = selected_weight_link.weight.toString();
+      if ((lastKeyDown > 47 && lastKeyDown < 58) || lastKeyDown == 189) {  //number keys and minus dash
+          var leftSlice = weightStr.slice(0, weight_char_index),
+              rightSlice = weightStr.slice(weight_char_index, weightStr.length),
+              newNum = String.fromCharCode(((lastKeyDown == 189) ? 45 : lastKeyDown)),
+              weightStr = leftSlice + newNum + rightSlice;
+          selected_weight_link.weight = weightStr;
+          increment_weight_char_index(weightStr);
+      } else if (lastKeyDown == 8) {  //backspace
+          d3.event.preventDefault();
+          var leftSlice = weightStr.slice(0, Math.max(0, weight_char_index - 1)),
+              rightSlice = weightStr.slice(weight_char_index, weightStr.length),
+              weightStr = leftSlice + rightSlice;
+          selected_weight_link.weight = weightStr;
+          decrement_weight_char_index(weightStr);
+      } else if (lastKeyDown == 37) {  //left arrow
+          decrement_weight_char_index(weightStr);
+      } else if (lastKeyDown == 39) {  //right arrow
+          increment_weight_char_index(weightStr);
+      } else if (lastKeyDown == 13) {  //enter
+          selected_weight_link.weight = parseInt(weightStr);
+          selected_weight_link = null;
+          cursor_rect.remove();
+      }
+      restart();
+      return;
   }
 
   if(!selected_node && !selected_link) return;

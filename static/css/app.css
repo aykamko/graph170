@@ -134,6 +134,11 @@ circle.node.reflexive {
   stroke-width: 2.5px;
 }
 
+rect.weight-rect {
+  fill: transparent;
+  cursor: pointer;
+}
+
 text {
   font-size: 30px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -146,11 +151,8 @@ text.id {
 }
 
 text.weight {
+  fill: #666;
   font-size: 22px;
+  font-family: 'Droid Sans Mono';
   text-anchor: middle;
-  cursor: default;
-}
-
-svg:not(.active):not(.ctrl) text.weight {
-  cursor: pointer;
 }
