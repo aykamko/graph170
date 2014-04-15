@@ -104,20 +104,15 @@ function resetMouseVars() {
 function resetUnselectedVars(selected) {
     if (selected == 'node') {
         selected_link = null;
-        if (selected_weight_link) {
-            parse_and_set_weight();
-        }
         selected_weight_link = null;
     } if (selected == 'link') {
         selected_node = null;
-        if (selected_weight_link) {
-            parse_and_set_weight();
-        }
         selected_weight_link = null;
     } if (selected == 'weight') {
         selected_node = null;
         selected_link = null;
     }
+    restart();
 }
 
 // update force layout (called automatically each iteration)
@@ -231,9 +226,6 @@ function restart() {
 
       // select node
       mousedown_node = d;
-      if(mousedown_node === selected_node) selected_node = null;
-      else selected_node = mousedown_node;
-      resetUnselectedVars('node');
 
       // reposition drag line
       drag_line
@@ -300,10 +292,6 @@ function restart() {
 
       // select link
       mousedown_link = d;
-      if(mousedown_link === selected_link) selected_link = null;
-      else selected_link = mousedown_link;
-      resetUnselectedVars('link');
-      restart();
     })
 
   var weight_g = g.append('svg:g')
@@ -320,38 +308,7 @@ function restart() {
       .on('mousedown', function(d) {
           // select node
           mousedown_weight_link = d;
-          if (selected_weight_link != null
-                  && mousedown_weight_link !== selected_weight_link) {
-              parse_and_set_weight();
-          }
-          selected_weight_link = d;
-          resetUnselectedVars('weight');
-
-          selected_weight_g = d3.select(this.parentNode);
-          weight_char_index = d.weight.toString().length;
-          weight_str = d.weight.toString();
-
-          cursor_rect = selected_weight_g.append('svg:rect')
-              .attr('class', 'cursor')
-              .attr('height', 16.5)
-              .attr('width', 1.5)
-          cursor_rect.append('svg:set')
-              .attr('id', 'show')
-              .attr('attributeName', 'visibility')
-              .attr('attributeType', 'CSS')
-              .attr('to', 'visible')
-              .attr('begin', '0s; hide.end')
-              .attr('dur', '1s')
-              .attr('fill', 'frozen');
-          cursor_rect.append('svg:set')
-              .attr('id', 'hide')
-              .attr('attributeName', 'visibility')
-              .attr('attributeType', 'CSS')
-              .attr('to', 'hidden')
-              .attr('begin', 'show.end')
-              .attr('dur', '1s')
-              .attr('fill', 'frozen');
-
+          d.weight_g = d3.select(this.parentNode);
           restart();
       }).on('mouseup', function(d) {
           if (!mousedown_weight_link) return;
@@ -430,6 +387,28 @@ toggleWeights = function() {
     restart();
 }
 
+// edge weight editing variables and functions
+var weight_char_index = null,
+    cursor_rect = null,
+    weight_str = null;
+function increment_weight_char_index(weight_str) {
+    weight_char_index = Math.min(weight_char_index + 1, weight_str.length);
+}
+function decrement_weight_char_index() {
+    weight_char_index = Math.max(0, weight_char_index - 1);
+}
+function parse_and_set_weight() {
+    var newVal = parseFloat(weight_str);
+    newVal = (isNaN(newVal)) ? 0 : newVal;
+    selected_weight_link.weight = newVal;
+
+    weight_char_index = null;
+    selected_weight_link = null;
+    weight_str = null;
+    cursor_rect.remove();
+    cursor_rect = null;
+}
+
 function mousedown() {
     // prevent I-bar on drag
     //d3.event.preventDefault();
@@ -437,10 +416,51 @@ function mousedown() {
     // because :active only works in WebKit?
     svg.classed('active', true);
 
-    if (d3.event.shiftKey || mousedown_node || mousedown_link || mousedown_weight_link) return;
-
-    if (selected_weight_link) {
+    if (selected_weight_link && (mousedown_weight_link !== selected_weight_link)) {
         parse_and_set_weight();
+    }
+
+    if (d3.event.shiftKey) return;
+    if (mousedown_node) {
+        if (mousedown_node === selected_node) selected_node = null;
+        else selected_node = mousedown_node;
+        resetUnselectedVars('node');
+        return;
+    } else if (mousedown_link) {
+        if (mousedown_link === selected_link) selected_link = null;
+        else selected_link = mousedown_link;
+        resetUnselectedVars('link');
+        return;
+    } else if (mousedown_weight_link) {
+        if (mousedown_weight_link === selected_weight_link) return;
+        selected_weight_link = mousedown_weight_link;
+        resetUnselectedVars('weight');
+
+        weight_str = selected_weight_link.weight.toString();
+        weight_char_index = weight_str.length;
+
+        cursor_rect = selected_weight_link.weight_g.append('svg:rect')
+            .attr('class', 'cursor')
+            .attr('height', 16.5)
+            .attr('width', 1.5)
+        cursor_rect.append('svg:set')
+            .attr('id', 'show')
+            .attr('attributeName', 'visibility')
+            .attr('attributeType', 'CSS')
+            .attr('to', 'visible')
+            .attr('begin', '0s; hide.end')
+            .attr('dur', '1s')
+            .attr('fill', 'frozen');
+        cursor_rect.append('svg:set')
+            .attr('id', 'hide')
+            .attr('attributeName', 'visibility')
+            .attr('attributeType', 'CSS')
+            .attr('to', 'hidden')
+            .attr('begin', 'show.end')
+            .attr('dur', '1s')
+            .attr('fill', 'frozen');
+
+        return;
     }
 
     // insert new node at point
@@ -482,30 +502,6 @@ function mouseup() {
 
   // clear mouse event vars
   resetMouseVars();
-}
-
-// edge weight editing variables and functions
-var weight_char_index = null,
-    selected_weight_g = null,
-    cursor_rect = null,
-    weight_str = null;
-function increment_weight_char_index(weight_str) {
-    weight_char_index = Math.min(weight_char_index + 1, weight_str.length);
-}
-function decrement_weight_char_index() {
-    weight_char_index = Math.max(0, weight_char_index - 1);
-}
-function parse_and_set_weight() {
-    var newVal = parseFloat(weight_str);
-    newVal = (isNaN(newVal)) ? 0 : newVal;
-    selected_weight_link.weight = newVal;
-
-    weight_char_index = null;
-    selected_weight_g = null;
-    selected_weight_link = null;
-    weight_str = null;
-    cursor_rect.remove();
-    cursor_rect = null;
 }
 
 // only respond once per keydown
