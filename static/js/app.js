@@ -5,38 +5,14 @@ var toggleForce;
 
 $(document).ready(function() {
 
+
 // set up SVG for D3
-var colors = d3.scale.category10();
-
-var terWidth = $('.code-cell').width();
-var windowWidth = $(window).width();
-var windowHeight = $(window).height();
-
-var svgWidth = Math.max(windowWidth - terWidth, 0);
-
 var svg = d3.select('#graph-cell').append('svg')
                 .attr('class', 'graph')
                 .style('height', windowHeight + 'px')
                 .style('width', svgWidth + 'px');
 
-var resizeTimeout;
-$(window).resize( function() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(resizeD3, 250);
-});
-
-var resizeD3 = function() {
-    windowWidth = $(window).width();
-    windowHeight = $(window).height();
-    svgWidth = Math.max(0, $(window).width() - terWidth);
-    force.size([svgWidth, windowHeight]).resume();
-    svg.style('width', svgWidth + 'px');
-}
-
-// set up initial nodes and links
-//  - nodes are known by 'id', not by index in array.
-//  - links are always source < target; edge directions are set by 'left' and 'right'.
-
+// set up initial graph
 graph = new Graph();
 for (var i = 0; i < 3; i++) {
     graph.addVertex(null, false);
@@ -53,8 +29,30 @@ force = d3.layout.force()
     .charge(-800)
     .on('tick', tick)
 
+// set up resizing behaviour
+var terminalWidth = $('.code-cell').width();
+var windowHeight, windowWidth, svgWidth;
+function resizeD3() {
+    windowWidth = $(window).width();
+    windowHeight = $(window).height();
+    svgWidth = Math.max(0, windowWidth - terminalWidth);
+    force.size([svgWidth, windowHeight]).resume();
+    svg.style('width', svgWidth + 'px')
+        .style('height', windowHeight + 'px');
+}
+
+var resizeTimeout;
+$(window).resize( function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(resizeD3, 250);
+});
+
+// initial resize
+resizeD3();
+
+// toggle for force layout
 forceEnabled = true;
-toggleForce = function() {
+function toggleForce() {
     if (forceEnabled) {
         force.stop();
         forceEnabled = false;
@@ -72,8 +70,8 @@ d3.select('#graph-cell').append('button')
     .attr('onclick', 'toggleForce()')
     .html('Force: ON')
 
-// define arrow markers for graph links
-// TODO: ununsed!!!
+
+// define arrow markers for drag edges
 svg.append('svg:defs').append('svg:marker')
     .attr('id', 'end-arrow')
     .attr('viewBox', '0 -5 10 10')
@@ -94,14 +92,6 @@ var drag_line = svg.append('svg:path')
 var path = svg.append('svg:g').selectAll('path'),
     circle = svg.append('svg:g').selectAll('g');
 
-// mouse event vars
-var selected_node = null,
-    selected_link = null,
-    selected_weight_link = null,
-    mousedown_link = null,
-    mousedown_node = null,
-    mousedown_weight_link = null,
-    mouseup_node = null;
 
 // cursor index for edge weight editing
 var weight_char_index = null;
@@ -116,11 +106,34 @@ function decrement_weight_char_index() {
 var selected_weight_g = null,
     cursor_rect = null;
 
+// mouse event vars
+var selected_node = null,
+    selected_link = null,
+    selected_weight_link = null,
+    mousedown_link = null,
+    mousedown_node = null,
+    mousedown_weight_link = null,
+    mouseup_node = null;
+
 function resetMouseVars() {
   mousedown_node = null;
   mouseup_node = null;
   mousedown_link = null;
   mousedown_weight_link = null;
+}
+
+function resetUnselectedVars(selected) {
+    if (selected == 'node') {
+        selected_link = null;
+        selected_weight_link = null;
+    } if (selected == 'link') {
+        selected_node = null;
+        selected_weight_link = null;
+    } if (selected == 'weight') {
+        console.log('weight');
+        selected_node = null;
+        selected_link = null;
+    }
 }
 
 // update force layout (called automatically each iteration)
@@ -236,7 +249,7 @@ function restart() {
       mousedown_node = d;
       if(mousedown_node === selected_node) selected_node = null;
       else selected_node = mousedown_node;
-      selected_link = null;
+      resetUnselectedVars('node');
 
       // reposition drag line
       drag_line
@@ -271,7 +284,7 @@ function restart() {
 
       // select new link
       selected_link = link;
-      selected_node = null;
+      resetUnselectedVars('link');
       restart();
     });
   
@@ -305,7 +318,7 @@ function restart() {
       mousedown_link = d;
       if(mousedown_link === selected_link) selected_link = null;
       else selected_link = mousedown_link;
-      selected_node = null;
+      resetUnselectedVars('link');
       restart();
     }).attr('d', function(link) {
         var deltaX = link.target.x - link.source.x,
@@ -355,10 +368,12 @@ function restart() {
           // select node
           mousedown_weight_link = d;
           selected_weight_link = d;
+          resetUnselectedVars('weight');
           selected_weight_g = d3.select(this.parentNode);
           weight_char_index = d.weight.toString().length;
+          restart();
 
-          cursor_rect = selected_weight_g.append('svg:rect')
+          foo1 = cursor_rect = selected_weight_g.append('svg:rect')
               .attr('class', 'cursor')
               .attr('height', 16.5)
               .attr('width', 1.5)
@@ -372,25 +387,23 @@ function restart() {
                   return link.y_perp - 8;
               })
           
-              /* Blinking doesn't work :(
           cursor_rect.append('svg:set')
-              .attr('id', 'show-cursor')
+              .attr('id', 'show')
               .attr('attributeName', 'visibility')
               .attr('attributeType', 'CSS')
               .attr('to', 'visible')
-              .attr('begin', '0s; hide-cursor.end')
+              .attr('begin', '0s; hide.end')
               .attr('dur', '1s')
               .attr('fill', 'frozen')
 
           cursor_rect.append('svg:set')
-              .attr('id', 'hide-cursor')
+              .attr('id', 'hide')
               .attr('attributeName', 'visibility')
               .attr('attributeType', 'CSS')
               .attr('to', 'hidden')
-              .attr('begin', 'show-cursor.end')
+              .attr('begin', 'show.end')
               .attr('dur', '1s')
               .attr('fill', 'frozen')
-              */
 
       }).on('mouseup', function(d) {
           if (!mousedown_weight_link) return;
@@ -445,6 +458,8 @@ function restart() {
   // set the graph in motion
   if (forceEnabled) {
     force.start();
+  } else {
+    tick();
   }
 }
 
