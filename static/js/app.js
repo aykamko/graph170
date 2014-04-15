@@ -52,7 +52,7 @@ resizeD3();
 
 // toggle for force layout
 forceEnabled = true;
-function toggleForce() {
+toggleForce = function() {
     if (forceEnabled) {
         force.stop();
         forceEnabled = false;
@@ -139,7 +139,12 @@ function resetUnselectedVars(selected) {
 // update force layout (called automatically each iteration)
 function tick() {
 
-  // draw directed edges with proper padding from node centers
+  //update vertices
+  circle.attr('transform', function(d) {
+    return 'translate(' + d.x + ',' + d.y + ')';
+  });
+
+  //update edges
   path.select('path.link').attr('d', function(link) {
     var deltaX = link.target.x - link.source.x,
         deltaY = link.target.y - link.source.y,
@@ -161,6 +166,7 @@ function tick() {
     return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
   })
 
+  //update edge arrows
   path.select('g.translate')
     .attr('transform', function(link) {
        return 'translate(' + link.targetX + ',' + link.targetY + ')';
@@ -169,6 +175,8 @@ function tick() {
     .attr('transform', function(link) {
        return 'rotate(' + link.angle + ')';
     });
+
+  //update edge weights
   var weight_g = path.select('g.weight-g')
       .attr('transform', function(link) { 
           var pathNode = link.d3_path.node();
@@ -179,7 +187,6 @@ function tick() {
               d3.select(this).select('text').node().getComputedTextLength();
           return 'translate(' + link.mid['x'] + ',' + link.mid['y'] + ')'; 
       })
-
   weight_g.select('text')
       .attr('x', function(link) {
           return link.x_perp;
@@ -187,7 +194,6 @@ function tick() {
       .attr('y', function(link) {
           return link.y_perp + 8;
       })
-
   weight_g.select('rect.weight-rect')
       .attr('width', function(link) {
           return link.weight_svg_length + 8;
@@ -199,6 +205,7 @@ function tick() {
           return link.y_perp - 10;
       })
 
+  //update edge weight cursor
   weight_g.select('rect.cursor')
       .attr('x', function(link) {
           var weightStr = link.weight.toString(),
@@ -209,9 +216,6 @@ function tick() {
           return link.y_perp - 8;
       })
 
-  circle.attr('transform', function(d) {
-    return 'translate(' + d.x + ',' + d.y + ')';
-  });
 }
 
 // update graph (called when needed)
@@ -223,10 +227,6 @@ function restart() {
 
   // add new nodes
   var g = circle.enter().append('svg:g');
-
-  g.attr('transform', function(d) {
-    return 'translate(' + d.x + ',' + d.y + ')';
-  });
 
   g.append('svg:circle')
     .attr('class', 'node')
@@ -320,50 +320,16 @@ function restart() {
       else selected_link = mousedown_link;
       resetUnselectedVars('link');
       restart();
-    }).attr('d', function(link) {
-        var deltaX = link.target.x - link.source.x,
-            deltaY = link.target.y - link.source.y,
-            dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 0.0000001,
-            normX = deltaX / dist,
-            normY = deltaY / dist,
-            sourcePadding = 30,
-            targetPadding = 35,
-            sourceX = link.source.x + (sourcePadding * normX),
-            sourceY = link.source.y + (sourcePadding * normY),
-            targetX = link.target.x - (targetPadding * normX),
-            targetY = link.target.y - (targetPadding * normY);
-            link.sourceX = sourceX;
-            link.sourceY = sourceY;
-            link.targetX = targetX;
-            link.targetY = targetY;
-            link.angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
-            link.d3_path = d3.select(this);
-        return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
     })
 
   var weight_g = g.append('svg:g')
       .attr('class', 'weight-g')
-      .attr('transform', function(link) { 
-          var perp_angle_radians = (link.angle - 90) * (Math.PI / 180);
-          link.x_perp = 18 * Math.cos(perp_angle_radians);
-          link.y_perp = 18 * Math.sin(perp_angle_radians);
-          var pathNode = link.d3_path.node();
-          link.mid = pathNode.getPointAtLength(pathNode.getTotalLength() / 2);
-          return 'translate(' + link.mid['x'] + ',' + link.mid['y'] + ')'; 
-      })
-
   weight_g.append('svg:g').append('svg:rect')
       .attr('class', 'weight-rect')
       .attr('width', 20)
       .attr('height', 20)
       .attr('rx', '10')
       .attr('ry', '10')
-      .attr('x', function(link) {
-          return link.x_perp - 10;
-      })
-      .attr('y', function(link) {
-          return link.y_perp - 10;
-      })
       .on('mousedown', function(d) {
           // select node
           mousedown_weight_link = d;
@@ -371,22 +337,12 @@ function restart() {
           resetUnselectedVars('weight');
           selected_weight_g = d3.select(this.parentNode);
           weight_char_index = d.weight.toString().length;
-          restart();
 
-          foo1 = cursor_rect = selected_weight_g.append('svg:rect')
+          cursor_rect = selected_weight_g.append('svg:rect')
               .attr('class', 'cursor')
               .attr('height', 16.5)
               .attr('width', 1.5)
-              .style('fill', 'black')
-              .attr('x', function(link) {
-                  var weightStr = link.weight.toString(),
-                      xAdjust = link.weight_svg_length / weightStr.length;
-                  return link.x_perp - (link.weight_svg_length / 2) + (xAdjust * weight_char_index) - 1;
-              })
-              .attr('y', function(link) {
-                  return link.y_perp - 8;
-              })
-          
+              .style('fill', 'black');
           cursor_rect.append('svg:set')
               .attr('id', 'show')
               .attr('attributeName', 'visibility')
@@ -394,8 +350,7 @@ function restart() {
               .attr('to', 'visible')
               .attr('begin', '0s; hide.end')
               .attr('dur', '1s')
-              .attr('fill', 'frozen')
-
+              .attr('fill', 'frozen');
           cursor_rect.append('svg:set')
               .attr('id', 'hide')
               .attr('attributeName', 'visibility')
@@ -403,28 +358,20 @@ function restart() {
               .attr('to', 'hidden')
               .attr('begin', 'show.end')
               .attr('dur', '1s')
-              .attr('fill', 'frozen')
+              .attr('fill', 'frozen');
 
+          restart();
       }).on('mouseup', function(d) {
           if (!mousedown_weight_link) return;
           mousedown_weight_link = null;
       })
-
    weight_g.append('svg:text')
-      .attr('x', function(link) {
-          return link.x_perp;
-      })
-      .attr('y', function(link) {
-          return link.y_perp + 8;
-      })
       .attr('class', 'weight')
    
   // adding markers to links
   var marker = g.append('svg:g')
         .attr('class', 'translate')
-        .attr('transform', function(link) { return 'translate(' + link.targetX + ',' + link.targetY + ')'; })
       .append('svg:g').attr('class', 'rotate')
-        .attr('transform', function(link) { return 'rotate(' + link.angle + ')'; })
       .append('svg:g').attr('class', 'scale')
         .attr('transform', 'scale(4)')
       .append('svg:g').attr('class', 'translate2')
@@ -456,10 +403,9 @@ function restart() {
     .text(function(d) { return d.weight; });
 
   // set the graph in motion
+  tick();
   if (forceEnabled) {
     force.start();
-  } else {
-    tick();
   }
 }
 
@@ -524,34 +470,16 @@ function mouseup() {
 var lastKeyDown = -1;
 
 function keydown() {
-/*   d3.event.preventDefault(); */
 
-  if(lastKeyDown !== -1) return;
   lastKeyDown = d3.event.keyCode;
- 
-  // ctrl
-  if(d3.event.shiftKey) {
-    circle.call(force.drag().on('drag.force', function(node) {
-        var x = d3.event.x,
-            y = d3.event.y;
-        d3.select(this).attr('transform', 'translate(' + x + ',' + y + ')');
-        node.px = x;
-        node.py = y;
-        node.x = x;
-        node.y = y;
-        if (forceEnabled) {
-            force.resume();
-        } else {
-            tick();
-        }
-    }));
-    svg.classed('ctrl', true);
+  if (lastKeyDown == 8) {
+    d3.event.preventDefault();
   }
 
   // Editing Edge Weights
   if (selected_weight_link) {
       var weightStr = selected_weight_link.weight.toString();
-      if ((lastKeyDown > 47 && lastKeyDown < 58) || lastKeyDown == 189) {  //number keys and minus dash
+      if ((lastKeyDown > 47 && lastKeyDown < 58) || lastKeyDown == 189 || lastKeyDown == 190) {  //number keys, minus dash, and decimal point
           var leftSlice = weightStr.slice(0, weight_char_index),
               rightSlice = weightStr.slice(weight_char_index, weightStr.length),
               newNum = String.fromCharCode(((lastKeyDown == 189) ? 45 : lastKeyDown)),
@@ -577,6 +505,27 @@ function keydown() {
       restart();
       return;
   }
+ 
+  // ctrl
+  if(d3.event.shiftKey) {
+    circle.call(force.drag().on('drag.force', function(node) {
+        var x = d3.event.x,
+            y = d3.event.y;
+        d3.select(this).attr('transform', 'translate(' + x + ',' + y + ')');
+        node.px = x;
+        node.py = y;
+        node.x = x;
+        node.y = y;
+        if (forceEnabled) {
+            force.resume();
+        } else {
+            tick();
+        }
+    }));
+    svg.classed('ctrl', true);
+    return;
+  }
+
 
   if(!selected_node && !selected_link) return;
   switch(d3.event.keyCode) {
