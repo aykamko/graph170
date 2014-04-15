@@ -1,7 +1,8 @@
 var graph;
 var force;
-var forceEnabled;
-var toggleForce;
+var forceEnabled = true, 
+    weightsEnabled = true;
+var toggleForce, toggleWeights;
 
 $(document).ready(function() {
 
@@ -50,26 +51,17 @@ $(window).resize( function() {
 // initial resize
 resizeD3();
 
-// toggle for force layout
-forceEnabled = true;
-toggleForce = function() {
-    if (forceEnabled) {
-        force.stop();
-        forceEnabled = false;
-        d3.select('.force-toggle').html('Force: OFF');
-    } else {
-        force.start();
-        forceEnabled = true;
-        d3.select('.force-toggle').html('Force: ON');
-    }
-}
-
 d3.select('#graph-cell').append('button')
     .attr('type', 'button')
     .attr('class', 'force-toggle')
     .attr('onclick', 'toggleForce()')
     .html('Force: ON')
 
+d3.select('#graph-cell').append('button')
+    .attr('type', 'button')
+    .attr('class', 'weight-toggle')
+    .attr('onclick', 'toggleWeights()')
+    .html('Weights: ON')
 
 // define arrow markers for drag edges
 svg.append('svg:defs').append('svg:marker')
@@ -323,6 +315,9 @@ function restart() {
 
   var weight_g = g.append('svg:g')
       .attr('class', 'weight-g')
+      .style('visibility', function () {
+          return (weightsEnabled) ? 'visible' : 'hidden';
+      });
   weight_g.append('svg:g').append('svg:rect')
       .attr('class', 'weight-rect')
       .attr('width', 20)
@@ -408,6 +403,33 @@ function restart() {
 }
 
 graph.setRestartFunc(restart);
+
+// toggle for force layout
+toggleForce = function() {
+    if (forceEnabled) {
+        force.stop();
+        forceEnabled = false;
+        d3.select('.force-toggle').html('Force: OFF');
+    } else {
+        force.start();
+        forceEnabled = true;
+        d3.select('.force-toggle').html('Force: ON');
+    }
+}
+
+// toggle for edge weights
+toggleWeights = function() {
+    if (weightsEnabled) {
+        weightsEnabled = false;
+        d3.selectAll('.weight-g').style('visibility', 'hidden');
+        d3.select('.weight-toggle').html('Weights: OFF');
+    } else {
+        weightsEnabled = true;
+        d3.selectAll('.weight-g').style('visibility', 'visible');
+        d3.select('.weight-toggle').html('Weights: ON');
+    }
+    restart();
+}
 
 function mousedown() {
   // prevent I-bar on drag

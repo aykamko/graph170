@@ -8,6 +8,10 @@
     box-sizing: border-box;         /* Opera/IE 8+ */
 }
 
+[hidden] {
+  display: none;
+}
+
 body {
   background-color: #EEE;
 }
@@ -77,13 +81,24 @@ body {
   z-index: 0;
 }
 
+button {
+  font-size: 13px;
+}
+
 .force-toggle {
   position: absolute;
   width: 100px;
   height: 40px;
   top: 15px;
   right: 15px;
-  font-size: 16px;
+}
+
+.weight-toggle {
+  position: absolute;
+  width: 100px;
+  height: 40px;
+  top: 65px;
+  right: 15px;
 }
 
 svg {
