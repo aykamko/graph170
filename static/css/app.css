@@ -139,6 +139,10 @@ rect.weight-rect {
   cursor: pointer;
 }
 
+rect.cursor {
+  fill: #590000;
+}
+
 text {
   font-size: 30px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;

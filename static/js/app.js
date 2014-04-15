@@ -130,7 +130,6 @@ function resetUnselectedVars(selected) {
         selected_node = null;
         selected_weight_link = null;
     } if (selected == 'weight') {
-        console.log('weight');
         selected_node = null;
         selected_link = null;
     }
@@ -209,7 +208,7 @@ function tick() {
   weight_g.select('rect.cursor')
       .attr('x', function(link) {
           var weightStr = link.weight.toString(),
-              xAdjust = link.weight_svg_length / weightStr.length;
+              xAdjust = link.weight_svg_length / (weightStr.length + Number.MIN_VALUE);
           return link.x_perp - (link.weight_svg_length / 2) + (xAdjust * weight_char_index) - 0.5;
       })
       .attr('y', function(link) {
@@ -342,7 +341,6 @@ function restart() {
               .attr('class', 'cursor')
               .attr('height', 16.5)
               .attr('width', 1.5)
-              .style('fill', 'black');
           cursor_rect.append('svg:set')
               .attr('id', 'show')
               .attr('attributeName', 'visibility')
@@ -479,10 +477,12 @@ function keydown() {
   // Editing Edge Weights
   if (selected_weight_link) {
       var weightStr = selected_weight_link.weight.toString();
-      if ((lastKeyDown > 47 && lastKeyDown < 58) || lastKeyDown == 189 || lastKeyDown == 190) {  //number keys, minus dash, and decimal point
+      if ((lastKeyDown > 47 && lastKeyDown < 58)
+              || lastKeyDown == 189 || lastKeyDown == 190) {  //number keys, minus dash, and decimal point
           var leftSlice = weightStr.slice(0, weight_char_index),
               rightSlice = weightStr.slice(weight_char_index, weightStr.length),
-              newNum = String.fromCharCode(((lastKeyDown == 189) ? 45 : lastKeyDown)),
+              lastKeyDown = (lastKeyDown > 188) ? (lastKeyDown - 144) : lastKeyDown,
+              newNum = String.fromCharCode(lastKeyDown),
               weightStr = leftSlice + newNum + rightSlice;
           selected_weight_link.weight = weightStr;
           increment_weight_char_index(weightStr);
@@ -498,7 +498,9 @@ function keydown() {
       } else if (lastKeyDown == 39) {  //right arrow
           increment_weight_char_index(weightStr);
       } else if (lastKeyDown == 13) {  //enter
-          selected_weight_link.weight = parseInt(weightStr);
+          var newVal = parseFloat(weightStr);
+          newVal = (isNaN(newVal)) ? 0 : newVal;
+          selected_weight_link.weight = newVal;
           selected_weight_link = null;
           cursor_rect.remove();
       }
