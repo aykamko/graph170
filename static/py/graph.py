@@ -72,13 +72,13 @@ class Graph:
     def _add_vertex_internal(self, vertex):
         self.vertices[vertex.label] = vertex
 
-    def add_edge(self, sourceLabel, targetLabel):
+    def add_edge(self, sourceLabel, targetLabel, weight = 1):
         sourceLabel, targetLabel = str(sourceLabel), str(targetLabel)
         source = self.vertices.get(sourceLabel)
         target = self.vertices.get(targetLabel)
         if not source or not target:
             return
-        newEdge = Edge(source, target)
+        newEdge = Edge(source, target, weight)
         self._add_edge_internal(newEdge)
 
     def _add_edge_internal(self, edge):

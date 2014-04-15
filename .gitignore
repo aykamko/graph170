@@ -1,3 +1,8 @@
+# vim
+*~
+*.swp
+*.swo
+
 # skulpt directory
 skulpt
 

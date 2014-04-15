@@ -6,10 +6,16 @@ var translate_graph = function() {
         graph_string += "G.add_vertex(" + vertexList[i].label + ")\n";
     }
     var edgeList = graph.edgeList();
-    var curEdge;
+    var edge, edgeStr;
     for (i = 0; i < edgeList.length; i++) {
         edge = edgeList[i];
-        graph_string += "G.add_edge(" + edge.sourceLabel() + ", " + edge.targetLabel() + ")\n";
+        edgeStr = "G.add_edge(" + edge.sourceLabel() + ", " + edge.targetLabel();
+        if (weightsEnabled) {
+            edgeStr += ", " + edge.weight + ")\n";
+        } else {
+            edgeStr += ")\n";
+        }
+        graph_string += edgeStr;
     }
     return graph_string;
 }
