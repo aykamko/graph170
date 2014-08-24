@@ -28,13 +28,14 @@ body {
 /*----- CSS Table ------------------------------------------------------------*/
 #body-container > div {
   display: table-row;
+  height: 100%;
 }
 
-.output-row {
+.output-row > div {
   height: 300px;
 }
 
-.button-row {
+.button-row > div {
   height: 80px;
 }
 
