@@ -61,7 +61,7 @@ function Edge(source, target, weight) {
     this.source_label = this.source.label;
     this.target_label = this.target.label;
     this.label = this.source_label + "," + this.target_label;
-    
+
     this.other = function(vertex) {
         if (vertex === this.source) {
             return this.target;
@@ -92,7 +92,7 @@ function Graph(restartFunc) {
     this.vertices = {};
     this.vertexArray = [];
     this.edgeArray = [];
-    
+
     this.addVertex = function(label, restart) {
         var newVertex;
         if (label) {
@@ -145,7 +145,7 @@ function Graph(restartFunc) {
             return;
         }
         var newEdge = new Edge(source, target);
-        if (!source.addOutgoingEdge(newEdge) 
+        if (!source.addOutgoingEdge(newEdge)
             || !target.addIncomingEdge(newEdge)) {
             return;
         }

@@ -23,8 +23,8 @@
     <script src="static/js/editor.js"></script>
 
     <!-- Skulpt -->
-    <script src="static/js/skulpt.js" type="text/javascript"></script> 
-    <script src="static/js/skulpt-stdlib.js" type="text/javascript"></script> 
+    <script src="static/js/skulpt.js" type="text/javascript"></script>
+    <script src="static/js/skulpt-stdlib.js" type="text/javascript"></script>
 
     <!-- Graph stuff -->
     <script src="static/js/action_queue.js"></script>
@@ -34,11 +34,45 @@
 
   </head>
   <body>
+    <div class="instructions">
+      <ul>
+        <li>Click to create new node.</li>
+        <li>Drag between nodes to create an edge.</li>
+        <li>Shift+click to drag existing nodes.</li>
+      </ul>
+    </div>
     <div id="body-container">
       <div class="code-row">
-        <div id="graph-cell"></div>
+        <div id="graph-cell">
+        </div>
         <div class="code-cell">
-          <textarea id="code"></textarea>
+          <textarea id="code">
+def BFSTree():
+    bfs_tree = []
+
+    for v in G.V:
+        v.dist = inf
+
+    s = G.vertex(0)
+    s.dist = 0
+
+    Q = [s]
+    while Q != []:
+        u = Q.pop(0)
+        for e in u.outgoing_edges():
+            v = e.other(u)
+            if v.dist == inf:
+                Q += [v]
+                bfs_tree += [e]
+                colorEdge(e, "red")
+                v.dist = u.dist + 1
+
+    for e in G.E:
+        if e not in bfs_tree:
+            removeEdge(e)
+
+BFSTree()
+          </textarea>
         </div>
       </div>
       <div class="button-row">
