@@ -13,6 +13,7 @@
 }
 
 body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   background-color: #EEE;
 }
 
@@ -51,6 +52,15 @@ body {
   width: 550px;
   float: right;
   z-index: 10;
+}
+
+.instructions {
+  position: absolute;
+  line-height: 10px;
+  left: 5px;
+  bottom: 5px;
+  font-size: 9px;
+  z-index: 100;
 }
 
 /*----- Terminal Components --------------------------------------------------*/
@@ -112,11 +122,11 @@ svg {
   user-select: none;
   overflow: visible;
 }
- 
+
 svg:not(.active):not(.ctrl) {
   cursor: crosshair;
 }
-  
+
 path.link {
   fill: none;
   stroke: #000;
@@ -144,7 +154,7 @@ circle.node {
   stroke-width: 1.5px;
   cursor: pointer;
 }
- 
+
 circle.node.reflexive {
   stroke: #000 !important;
   stroke-width: 2.5px;

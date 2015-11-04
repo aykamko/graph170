@@ -1,6 +1,6 @@
 var graph;
 var force;
-var forceEnabled = true, 
+var forceEnabled = true,
     weightsEnabled = true;
 var toggleForce, toggleWeights;
 
@@ -13,13 +13,19 @@ var svg = d3.select('#graph-cell').append('svg')
                 .style('height', windowHeight + 'px')
                 .style('width', svgWidth + 'px');
 
-// set up initial graph
+// set up random initial graph
+var INIT_NODES = 6;
 graph = new Graph();
-for (var i = 0; i < 3; i++) {
+for (var i = 0; i < INIT_NODES; i++) {
     graph.addVertex(null, false);
 }
-graph.addEdge(0, 1, false);
-graph.addEdge(1, 2, false);
+for (var i = 0; i < INIT_NODES; i++) {
+    for (var j = i+1; j < INIT_NODES; j++) {
+        if (Math.random() < 0.7) {
+            graph.addEdge(i, j, false);
+        }
+    }
+}
 
 // init D3 force layout
 force = d3.layout.force()
@@ -157,14 +163,14 @@ function tick() {
 
   //update edge weights
   var weight_g = path.select('g.weight-g')
-      .attr('transform', function(link) { 
+      .attr('transform', function(link) {
           var pathNode = link.d3_path.node();
           link.mid = pathNode.getPointAtLength(pathNode.getTotalLength() / 2);
           link.x_perp = 18 * Math.cos((link.angle - 90) * (Math.PI / 180));
           link.y_perp = 18 * Math.sin((link.angle - 90) * (Math.PI / 180));
           link.weight_svg_length =
               d3.select(this).select('text').node().getComputedTextLength();
-          return 'translate(' + link.mid['x'] + ',' + link.mid['y'] + ')'; 
+          return 'translate(' + link.mid['x'] + ',' + link.mid['y'] + ')';
       })
   weight_g.select('text')
       .attr('x', function(link) {
@@ -263,7 +269,7 @@ function restart() {
       resetUnselectedVars('link');
       restart();
     });
-  
+
   // show node IDs
   g.append('svg:text')
       .attr('x', 0)
@@ -316,7 +322,7 @@ function restart() {
       })
    weight_g.append('svg:text')
       .attr('class', 'weight')
-   
+
   // adding markers to links
   var marker = g.append('svg:g')
         .attr('class', 'translate')
@@ -543,7 +549,7 @@ function keydown() {
       restart();
       return;
   }
- 
+
   // ctrl
   if(d3.event.shiftKey) {
     circle.call(force.drag().on('drag.force', function(node) {
@@ -563,7 +569,6 @@ function keydown() {
     svg.classed('ctrl', true);
     return;
   }
-
 
   if(!selected_node && !selected_link) return;
   switch(d3.event.keyCode) {
